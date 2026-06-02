@@ -1,0 +1,120 @@
+/* ===============================
+   DESIGN TOKENS
+================================ */
+:root{
+  --bg:#fff5f7;
+  --card:#ffffff;
+  --accent:#d85b82;
+  --accent-light:#ffd6e5;
+  --text:#2b2b2b;
+
+  --font:'Segoe UI', sans-serif;
+
+  --gap:1rem;
+  --radius:16px;
+  --shadow:0 8px 20px rgba(0,0,0,.08);
+
+  --month-card-height:140px;
+}
+
+/* ===============================
+   RESET
+================================ */
+*{
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+}
+
+body{
+  font-family:var(--font);
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+  padding:2rem;
+}
+
+/* ===============================
+   LAYOUT
+================================ */
+.calendar-layout{
+  display:grid;
+  grid-template-columns:2fr 1fr;
+  gap:2rem;
+}
+
+.months-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:var(--gap);
+}
+
+.month-card{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  height:var(--month-card-height);
+  padding:1rem;
+  cursor:pointer;
+
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+
+  transition:.25s;
+}
+
+.month-card:hover{
+  transform:translateY(-4px);
+}
+
+.month-card.active{
+  border:3px solid var(--accent);
+}
+
+.thumbnail{
+  font-size:2rem;
+}
+
+.preview-panel{
+  background:var(--card);
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:1.5rem;
+}
+
+.preview-image{
+  height:240px;
+  border-radius:var(--radius);
+  background:var(--accent-light);
+
+  display:flex;
+  align-items:center;
+  justify-content:center;
+
+  font-size:5rem;
+  margin-bottom:1rem;
+}
+
+.section-header{
+  margin-bottom:1.5rem;
+}
+
+/* ===============================
+   RESPONSIVE
+================================ */
+@media (max-width:900px){
+  .calendar-layout{
+    grid-template-columns:1fr;
+  }
+}
+
+@media (max-width:600px){
+  body{
+    padding:1rem;
+  }
+
+  .months-grid{
+    grid-template-columns:1fr;
+  }
+}

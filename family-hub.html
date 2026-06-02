@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family Hub</title>
+
+  <!-- =============================================
+       GOOGLE FONT
+       We load "Nunito" — a friendly, rounded font
+       that suits a family app perfectly.
+  ============================================= -->
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+
+    /* =============================================
+       1. CSS VARIABLES (Design Tokens)
+       These are like "named colours" you can reuse
+       everywhere. Change one value here, and it
+       updates the whole page.
+    ============================================= */
+   :root {
+  /* Main gradient colors */
+  --bg-darkest:   #c44569;   /* top pink */
+  --bg-sidebar:   #b0305b;   /* darker pink panels */
+  --bg-main:      #f4ac87;   /* bottom peach */
+  --bg-card:      #8d2d52;   /* dark rose cards */
+  --bg-hover:     #a63a63;   /* hover state */
+
+  /* Accent colors */
+  --accent:       #ff947a;   /* peach accent */
+  --accent-soft:  #ffd4c4;   /* light peach text accent */
+
+  /* Text */
+  --text-primary: #ffffff;   /* pure white */
+  --text-muted:   #ffe4db;   /* soft off-white */
+
+  /* Borders */
+  --border:       rgba(255, 255, 255, 0.15);
+
+  /* Status */
+  --online:       #7ef0a7;
+}
+
+    /* =============================================
+       2. RESET / BASE STYLES
+       Remove browser defaults so everything
+       behaves predictably.
+    ============================================= */
+    *, *::before, *::after {
+      box-sizing: border-box;  /* padding included in width */
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+  font-family: 'Nunito', sans-serif;
+
+  /* Pink -> Peach gradient */
+  background: linear-gradient(
+    to bottom,
+    #c44569 0%,
+    #d84d74 25%,
+    #e86c7f 50%,
+    #f28d87 75%,
+    #f4ac87 100%
+  );
+
+  color: var(--text-primary);
+
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+
+  /* Prevent gradient from repeating */
+  background-attachment: fixed;
+  background-repeat: no-repeat;
+}
+
+    /* =============================================
+       3. TOP HEADER
+       Sits at the very top across the full width.
+       This is <header> — a semantic landmark element
+       that screen-readers and search engines
+       understand as the page header.
+    ============================================= */
+    header {
+      background-color: var(--bg-sidebar);
+      border-bottom: 2px solid var(--accent);
+      padding: 0 24px;
+      height: 56px;
+
+      /* Flexbox: put items side-by-side, vertically centred */
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+
+      /* Stick the header to the top as user scrolls */
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    /* Title text inside the header */
+    .header-title {
+      font-size: 1.4rem;
+      font-weight: 800;
+      color: var(--accent-soft);
+      letter-spacing: 0.5px;
+    }
+
+    /* A coloured dot that shows status (purely decorative here) */
+    .header-status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+
+    .status-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;           /* circle */
+      background-color: var(--online);
+    }
+
+    /* =============================================
+       4. LAYOUT WRAPPER
+       This <div> sits directly under the header.
+       It holds the sidebar + main content
+       side-by-side using Flexbox.
+       flex: 1 means "grow to fill remaining height".
+    ============================================= */
+    .layout {
+      display: flex;       /* children go side-by-side */
+      flex: 1;             /* fill remaining vertical space */
+      overflow: hidden;    /* prevent double scroll bars */
+    }
+
+    /* =============================================
+       5. LEFT SIDEBAR  (<nav>)
+       <nav> is a semantic element meaning
+       "navigation landmark". It holds the menu links.
+       It does NOT scroll — the main area does.
+    ============================================= */
+    .sidebar {
+      width: 220px;              /* fixed width */
+      min-width: 220px;          /* never shrink below this */
+      background-color: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      padding: 20px 12px;
+
+      /* Flexbox: stack nav sections vertically */
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+
+      overflow-y: auto;          /* scroll if content is taller than viewport */
+    }
+
+    /* Small label above a group of nav items */
+    .nav-section-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-muted);
+      padding: 10px 10px 4px;
+    }
+
+    /* Each navigation item (Dashboard, Calendar, etc.) */
+    .nav-item {
+      display: flex;
+      align-items: center;       /* icon + text vertically centred */
+      gap: 12px;
+      padding: 10px 12px;
+      border-radius: 8px;
+      cursor: pointer;           /* hand cursor on hover */
+      color: var(--text-muted);
+      font-weight: 600;
+      font-size: 0.95rem;
+      transition: background-color 0.15s, color 0.15s;
+    }
+
+    /* Hover state: highlight nav item */
+    .nav-item:hover {
+      background-color: var(--bg-hover);
+      color: var(--text-primary);
+    }
+
+    /* Active / selected nav item */
+    .nav-item.active {
+      background-color: var(--accent);
+      color: #fff;
+    }
+
+    /* Icon inside each nav item */
+    .nav-icon {
+      font-size: 1.1rem;
+      width: 20px;
+      text-align: center;
+    }
+
+    /* A thin horizontal divider between nav groups */
+    .nav-divider {
+      border: none;
+      border-top: 1px solid var(--border);
+      margin: 10px 0;
+    }
+
+    /* Small member avatar list at the bottom of sidebar */
+    .sidebar-members {
+      margin-top: auto;          /* push to bottom of sidebar */
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+    }
+
+    .member-row {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 10px;
+      border-radius: 8px;
+      font-size: 0.88rem;
+      color: var(--text-muted);
+    }
+
+    .avatar {
+      width: 30px;
+      height: 30px;
+      border-radius: 50%;
+      background-color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: #fff;
+      flex-shrink: 0;
+    }
+
+    /* =============================================
+       6. MAIN CONTENT AREA  (<main>)
+       <main> is a semantic element — there should
+       only be ONE per page. It holds the "active"
+       page content (Dashboard in this case).
+       flex: 1 makes it fill the remaining width
+       after the sidebar takes its 220px.
+    ============================================= */
+    main {
+      flex: 1;                   /* grow to fill remaining horizontal space */
+      
+      overflow-y: auto;          /* scroll when content is tall */
+      padding: 32px 36px;
+      background: transparent;
+    }
+
+    /* =============================================
+       7. PAGE HEADER (inside <main>)
+       The title of the currently viewed section.
+    ============================================= */
+    .page-header {
+      margin-bottom: 28px;
+    }
+
+    .page-header h1 {
+      font-size: 1.6rem;
+      font-weight: 800;
+      color: var(--text-primary);
+    }
+
+    .page-header p {
+      margin-top: 4px;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    /* =============================================
+       8. DASHBOARD CARDS GRID
+       The three placeholder cards sit in a grid row.
+       We use Flexbox with wrap so the cards can
+       reflow on smaller screens.
+    ============================================= */
+    .cards-grid {
+      display: flex;
+      flex-wrap: wrap;           /* cards wrap to next line on narrow screens */
+      gap: 20px;
+    }
+
+    /* Each individual card */
+    .card {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 22px 24px;
+      flex: 1;                   /* grow equally to share available width */
+      min-width: 240px;          /* never shrink below 240px before wrapping */
+    }
+
+    /* Card header row: icon + title side by side */
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .card-icon {
+      font-size: 1.3rem;
+    }
+
+    .card-title {
+      font-size: 1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    /* A coloured top border accent on each card */
+    .card.birthdays  { border-top: 3px solid #f97979; }
+    .card.events     { border-top: 3px solid #f9c74f; }
+    .card.photos     { border-top: 3px solid #4fc3f7; }
+
+    /* Individual items inside a card */
+    .card-item {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.88rem;
+      color: var(--text-primary);
+    }
+
+    .card-item:last-child {
+      border-bottom: none;       /* remove line on last item */
+    }
+
+    .card-item-meta {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+    }
+
+    /* "View All" link at the bottom of a card */
+    .card-link {
+      display: inline-block;
+      margin-top: 14px;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--accent-soft);
+      text-decoration: none;
+    }
+
+    .card-link:hover {
+      text-decoration: underline;
+    }
+
+    /* =============================================
+       9. PHOTO THUMBNAILS (inside Recent Photos card)
+       A small grid of placeholder photo boxes.
+    ============================================= */
+    .photo-grid {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .photo-thumb {
+      width: 64px;
+      height: 64px;
+      border-radius: 8px;
+      background-color: var(--bg-hover);
+      border: 1px solid var(--border);
+
+      /* Centre the placeholder text inside */
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+    }
+
+    /* =============================================
+       10. QUICK STATS BAR
+       A row of simple stat numbers shown below
+       the cards — an example of extra dashboard
+       content.
+    ============================================= */
+    .stats-bar {
+      display: flex;
+      gap: 20px;
+      flex-wrap: wrap;
+      margin-top: 28px;
+    }
+
+    .stat-box {
+      background-color: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 18px 24px;
+      flex: 1;
+      min-width: 140px;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-size: 2rem;
+      font-weight: 800;
+      color: var(--accent-soft);
+    }
+
+    .stat-label {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 4px;
+    }
+
+  </style>
+</head>
+
+<body>
+
+  <!-- =============================================
+       TOP HEADER
+       Landmark: tells users (and screen readers)
+       this is the site header.
+  ============================================= -->
+  <header>
+    <span class="header-title">🏠 Family Hub</span>
+    <div class="header-status">
+      <span class="status-dot"></span>
+      <span>4 members online</span>
+    </div>
+  </header>
+
+
+  <!-- =============================================
+       LAYOUT WRAPPER
+       This div's only job is to hold the sidebar
+       and the main area side-by-side via Flexbox.
+  ============================================= -->
+  <div class="layout">
+
+
+    <!-- =============================================
+         LEFT SIDEBAR  (semantic <nav>)
+         Contains all navigation links.
+    ============================================= -->
+    <nav class="sidebar">
+
+      <!-- Section label -->
+      <span class="nav-section-label">Menu</span>
+
+      <!-- Each nav-item is one clickable row -->
+      <!-- class="active" marks the currently open page -->
+      <div class="nav-item active">
+        <span class="nav-icon">🏡</span>
+        <span>Dashboard</span>
+      </div>
+
+      <a href="index.html" class="nav-item">
+  <span class="nav-icon">📅</span>
+  <span>Calendar</span>
+</a>
+
+      <div class="nav-item">
+        <span class="nav-icon">🎉</span>
+        <span>Events</span>
+      </div>
+
+      <div class="nav-item">
+        <span class="nav-icon">🖼️</span>
+        <span>Photos</span>
+      </div>
+
+      <!-- Chat lives in the nav menu — NOT a side panel -->
+      <div class="nav-item">
+        <span class="nav-icon">💬</span>
+        <span>Chat</span>
+      </div>
+
+      <!-- Divider between main nav and secondary nav -->
+      <hr class="nav-divider" />
+
+      <span class="nav-section-label">Manage</span>
+
+      <div class="nav-item">
+        <span class="nav-icon">👨‍👩‍👧‍👦</span>
+        <span>Members</span>
+      </div>
+
+      <div class="nav-item">
+        <span class="nav-icon">⚙️</span>
+        <span>Settings</span>
+      </div>
+
+
+      <!-- ==========================================
+           MINI MEMBER LIST
+           Pushed to the bottom of the sidebar
+           with  margin-top: auto  in CSS.
+      ========================================== -->
+      <div class="sidebar-members">
+        <span class="nav-section-label">Family Members</span>
+
+        <div class="member-row">
+          <div class="avatar">MA</div>
+          <span>Mom (Admin)</span>
+        </div>
+
+        <div class="member-row">
+          <div class="avatar">DA</div>
+          <span>Dad</span>
+        </div>
+
+        <div class="member-row">
+          <div class="avatar">AL</div>
+          <span>Alice</span>
+        </div>
+
+        <div class="member-row">
+          <div class="avatar">BN</div>
+          <span>Ben</span>
+        </div>
+      </div>
+
+    </nav>
+    <!-- END SIDEBAR -->
+
+
+    <!-- =============================================
+         MAIN CONTENT AREA  (semantic <main>)
+         Shows the active page — Dashboard here.
+    ============================================= -->
+    <main>
+
+      <!-- Page title / subtitle -->
+      <div class="page-header">
+        <h1>Dashboard</h1>
+        <p>Welcome back! Here's what's happening in your family.</p>
+      </div>
+
+
+      <!-- ==========================================
+           DASHBOARD CARDS
+           Three cards side-by-side (or stacked on
+           small screens thanks to flex-wrap).
+      ========================================== -->
+      <div class="cards-grid">
+
+
+        <!-- Card 1: Upcoming Birthdays -->
+        <section class="card birthdays" aria-label="Upcoming Birthdays">
+          <div class="card-header">
+            <span class="card-icon">🎂</span>
+            <span class="card-title">Upcoming Birthdays</span>
+          </div>
+
+          <div class="card-item">
+            <span>Alice</span>
+            <span class="card-item-meta">June 12 · 3 days</span>
+          </div>
+          <div class="card-item">
+            <span>Grandpa Joe</span>
+            <span class="card-item-meta">June 20 · 11 days</span>
+          </div>
+          <div class="card-item">
+            <span>Aunt Mary</span>
+            <span class="card-item-meta">July 4 · 25 days</span>
+          </div>
+
+          <a href="#" class="card-link">View all birthdays →</a>
+        </section>
+
+
+        <!-- Card 2: Upcoming Events -->
+        <section class="card events" aria-label="Upcoming Events">
+          <div class="card-header">
+            <span class="card-icon">📌</span>
+            <span class="card-title">Upcoming Events</span>
+          </div>
+
+          <div class="card-item">
+            <span>School Play</span>
+            <span class="card-item-meta">June 14</span>
+          </div>
+          <div class="card-item">
+            <span>Beach Trip</span>
+            <span class="card-item-meta">June 22</span>
+          </div>
+          <div class="card-item">
+            <span>Family BBQ</span>
+            <span class="card-item-meta">July 4</span>
+          </div>
+
+          <a href="#" class="card-link">View all events →</a>
+        </section>
+
+
+        <!-- Card 3: Recent Photos -->
+        <section class="card photos" aria-label="Recent Photos">
+          <div class="card-header">
+            <span class="card-icon">📷</span>
+            <span class="card-title">Recent Photos</span>
+          </div>
+
+          <!-- Small thumbnail grid -->
+          <div class="photo-grid">
+            <div class="photo-thumb">🏖️</div>
+            <div class="photo-thumb">🎈</div>
+            <div class="photo-thumb">🌳</div>
+            <div class="photo-thumb">🍕</div>
+            <div class="photo-thumb">⚽</div>
+            <div class="photo-thumb">🎵</div>
+          </div>
+
+          <a href="#" class="card-link">View all photos →</a>
+        </section>
+
+
+      </div>
+      <!-- END CARDS GRID -->
+
+
+      <!-- ==========================================
+           QUICK STATS BAR
+           A second row showing summary numbers.
+      ========================================== -->
+      <div class="stats-bar">
+
+        <div class="stat-box">
+          <div class="stat-number">4</div>
+          <div class="stat-label">Family Members</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-number">12</div>
+          <div class="stat-label">Events This Month</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-number">84</div>
+          <div class="stat-label">Photos Shared</div>
+        </div>
+
+        <div class="stat-box">
+          <div class="stat-number">3</div>
+          <div class="stat-label">Unread Messages</div>
+        </div>
+
+      </div>
+      <!-- END STATS BAR -->
+
+    </main>
+    <!-- END MAIN -->
+
+
+  </div>
+  <!-- END LAYOUT WRAPPER -->
+
+</body>
+</html>
