@@ -3,31 +3,17 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Family Hub Calendar</title>
+  <title>Family Calendar</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
 
-  <main class="calendar-layout">
+  <header class="top-header">
+    <h1>Family Calendar</h1>
+    <p>Click → highlight | Double click → note | Right click → flag</p>
+  </header>
 
-    <section class="months-section">
-      <header class="section-header">
-        <h1>Family Calendar</h1>
-        <p>Select a month to preview family activities.</p>
-      </header>
-
-      <div id="monthsGrid" class="months-grid"></div>
-    </section>
-
-    <aside class="preview-panel">
-      <div class="preview-image" id="previewImage">🌸</div>
-      <h2 id="previewTitle">January</h2>
-      <p id="previewDescription">
-        Family goals, birthdays, and special memories.
-      </p>
-    </aside>
-
-  </main>
+  <main id="calendarContainer" class="calendar-container"></main>
 
   <script src="script.js"></script>
 </body>

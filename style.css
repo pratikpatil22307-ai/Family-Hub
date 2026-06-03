@@ -1,120 +1,171 @@
-/* ===============================
-   DESIGN TOKENS
-================================ */
-:root{
-  --bg:#fff5f7;
-  --card:#ffffff;
-  --accent:#d85b82;
-  --accent-light:#ffd6e5;
-  --text:#2b2b2b;
-
-  --font:'Segoe UI', sans-serif;
-
-  --gap:1rem;
-  --radius:16px;
-  --shadow:0 8px 20px rgba(0,0,0,.08);
-
-  --month-card-height:140px;
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: Arial, sans-serif;
 }
 
-/* ===============================
-   RESET
-================================ */
-*{
-  margin:0;
-  padding:0;
-  box-sizing:border-box;
+/* darker warm gradient */
+body {
+  min-height: 100vh;
+  padding: 20px;
+  background: linear-gradient(135deg, #c31432, #ff5f6d, #fdbb2d);
 }
 
-body{
-  font-family:var(--font);
-  background:var(--bg);
-  color:var(--text);
-  min-height:100vh;
-  padding:2rem;
+/* header */
+.top-header {
+  text-align: center;
+  color: white;
+  margin-bottom: 25px;
 }
 
-/* ===============================
-   LAYOUT
-================================ */
-.calendar-layout{
-  display:grid;
-  grid-template-columns:2fr 1fr;
-  gap:2rem;
+/* CENTER LAYOUT (IMPORTANT FIX) */
+.calendar-container {
+  width: 100%;
+  max-width: 900px;
+  margin: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
 }
 
-.months-grid{
-  display:grid;
-  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
-  gap:var(--gap);
+/* MONTH CARD */
+.month-block {
+  display: flex;
+  gap: 15px;
+
+  padding: 15px;
+  border-radius: 20px;
+
+  background: rgba(255,255,255,0.12);
+  backdrop-filter: blur(12px);
+
+  border: 1px solid rgba(255,255,255,0.2);
+
+  box-shadow: 0 10px 30px rgba(0,0,0,0.25);
 }
 
-.month-card{
-  background:var(--card);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  height:var(--month-card-height);
-  padding:1rem;
-  cursor:pointer;
-
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-
-  transition:.25s;
+/* LEFT SIDE IMAGE */
+.month-image {
+  width: 120px;
+  height: 120px;
+  border-radius: 15px;
+  object-fit: cover;
+  flex-shrink: 0;
 }
 
-.month-card:hover{
-  transform:translateY(-4px);
+/* RIGHT CONTENT */
+.month-content {
+  flex: 1;
 }
 
-.month-card.active{
-  border:3px solid var(--accent);
+/* TITLE */
+.month-title {
+  font-size: 30px;
+  font-weight: bold;
+  margin-bottom: 10px;
+  color: white;
+  display: flex;
+  gap: 8px;
+  align-items: center;
 }
 
-.thumbnail{
-  font-size:2rem;
+/* GRID */
+.dates-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 6px;
 }
 
-.preview-panel{
-  background:var(--card);
-  border-radius:var(--radius);
-  box-shadow:var(--shadow);
-  padding:1.5rem;
+/* DATE CELL */
+.date-cell {
+  aspect-ratio: 1;
+  border-radius: 10px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+
+  background: rgba(255,255,255,0.15);
+  color: white;
+
+  font-size: 12px;
+  cursor: pointer;
+  position: relative;
+
+  transition: 0.2s;
 }
 
-.preview-image{
-  height:240px;
-  border-radius:var(--radius);
-  background:var(--accent-light);
-
-  display:flex;
-  align-items:center;
-  justify-content:center;
-
-  font-size:5rem;
-  margin-bottom:1rem;
+.date-cell:hover {
+  transform: scale(1.08);
 }
 
-.section-header{
-  margin-bottom:1.5rem;
+/* selected */
+.date-cell.selected {
+  background: linear-gradient(135deg, #ff3d7f, #ffb347);
+  box-shadow: 0 0 10px rgba(255,60,120,0.7);
 }
 
-/* ===============================
-   RESPONSIVE
-================================ */
-@media (max-width:900px){
-  .calendar-layout{
-    grid-template-columns:1fr;
-  }
+/* note */
+.note {
+  font-size: 8px;
+  opacity: 0.85;
+  text-align: center;
+  max-width: 90%;
+  overflow: hidden;
+  white-space: nowrap;
 }
 
-@media (max-width:600px){
-  body{
-    padding:1rem;
-  }
+/* flag */
+.flag {
+  position: absolute;
+  top: 3px;
+  right: 4px;
+  font-size: 10px;
+}
+html {
+  scroll-behavior: smooth;
+}
 
-  .months-grid{
-    grid-template-columns:1fr;
+/* smoother rendering */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* smoother card interaction */
+.month-block {
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+  will-change: transform;
+}
+
+/* hover feels more “alive” */
+.month-block:hover {
+  transform: translateY(-6px) scale(1.01);
+}
+
+/* date animation */
+.date-cell {
+  transition: transform 0.18s ease, background 0.2s ease;
+  will-change: transform;
+}
+
+/* click feedback */
+.date-cell:active {
+  transform: scale(0.92);
+}
+
+/* ✨ fade-in animation for scroll */
+.month-block {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: fadeInUp 0.6s ease forwards;
+}
+
+@keyframes fadeInUp {
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
