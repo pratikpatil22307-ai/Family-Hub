@@ -12,6 +12,8 @@
 
   <!-- External stylesheet — no inline styles, no frameworks -->
   <link rel="stylesheet" href="css/photos.css" />
+  <!-- Mobile responsive layer — must come last -->
+  <link rel="stylesheet" href="css/mobile.css" />
 </head>
 
 <body>
@@ -63,7 +65,7 @@
           </li>
 
           <li class="sidebar__nav-item">
-            <a href="events1.html" class="sidebar__nav-link" aria-label="Events">
+            <a href="events.html" class="sidebar__nav-link" aria-label="Events">
               <svg class="sidebar__nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
                 <path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/>
               </svg>
@@ -253,6 +255,8 @@
 
   <!-- External JS — deferred so DOM is ready -->
   <script src="js/photos.js" defer></script>
+  <!-- Mobile navigation — enhances the existing #menu-toggle button -->
+  <script src="js/mobile-nav.js" defer></script>
 
 </body>
 </html>

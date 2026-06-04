@@ -400,3 +400,21 @@
       color: var(--text-muted);
       margin-top: 4px;
     }
+
+    /* =============================================
+       11. HEADER NOTIFICATION BELL SPACING
+       The bell sits between the title and the status
+       indicator. We turn the header into a 3-item
+       flex row and push the bell + status to the right.
+    ============================================= */
+    header {
+      gap: 12px;   /* add breathing room between all header children */
+    }
+
+    /* Push the bell + status group to the right */
+    .notif-bell-wrap {
+      margin-left: auto;   /* pushes everything after the title to the right */
+      margin-right: 8px;
+    }
+
+    /* The status div is already at the end — no change needed */

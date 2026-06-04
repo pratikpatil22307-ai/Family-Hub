@@ -12,6 +12,10 @@
   ============================================= -->
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
 <link rel="stylesheet" href="css/family-hub.css" />
+  <!-- Notification Centre styles -->
+  <link rel="stylesheet" href="css/notifications.css" />
+  <!-- Mobile responsive layer — must come LAST to override page styles -->
+  <link rel="stylesheet" href="css/mobile.css" />
 
 </head>
 
@@ -24,6 +28,8 @@
   ============================================= -->
   <header>
     <span class="header-title">🏠 Family Hub</span>
+    <!-- Notification bell lives here — notifications.js injects
+         the full HTML (badge + dropdown) into this gap automatically -->
     <div class="header-status">
       <span class="status-dot"></span>
       <span>4 members online</span>
@@ -253,6 +259,22 @@
 
   </div>
   <!-- END LAYOUT WRAPPER -->
+
+  <!-- events.js provides getEvents(), localStorage keys, and helpers
+       that notifications.js reads to build event-based notifications -->
+  <script src="js/events.js"></script>
+
+  <!-- Notification Centre — must come AFTER events.js -->
+  <script src="js/notifications.js"></script>
+  <script>
+    // Boot the notification system once the DOM is fully loaded
+    document.addEventListener('DOMContentLoaded', function () {
+      initNotifications();
+    });
+  </script>
+
+  <!-- Mobile navigation — hamburger + sidebar slide-in for all screen sizes -->
+  <script src="js/mobile-nav.js" defer></script>
 
 </body>
 </html>
