@@ -3,7 +3,7 @@
    Handles: auth headers, base URL, error normalisation
    ============================================================ */
 
-const API_BASE = '/api';
+const API_BASE = 'http://localhost:5000/api';
 
 /* ---------- Auth token helpers ---------- */
 const getToken = () => localStorage.getItem('fh_token');
