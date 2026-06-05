@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Photos — Family Hub</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/photos.css" />
+  <link rel="stylesheet" href="css/mobile.css" />
+  <style>
+    .upload-zone {
+      border:2px dashed rgba(108,99,255,0.4);
+      border-radius:16px;
+      padding:32px;
+      text-align:center;
+      cursor:pointer;
+      transition:all 0.2s;
+      background:rgba(108,99,255,0.04);
+      margin-bottom:24px;
+    }
+    .upload-zone:hover, .upload-zone.drag-over { border-color:#6c63ff; background:rgba(108,99,255,0.08); }
+    .upload-zone input[type=file] { display:none; }
+    .upload-zone .icon { font-size:2.5rem; }
+    .upload-zone p { color:#636e72; font-size:0.9rem; margin-top:6px; }
+    .photo-grid-full { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:16px; }
+    .photo-item {
+      position:relative;
+      border-radius:12px;
+      overflow:hidden;
+      aspect-ratio:1;
+      cursor:pointer;
+      background:#f0f2ff;
+    }
+    .photo-item img { width:100%; height:100%; object-fit:cover; transition:transform 0.3s; }
+    .photo-item:hover img { transform:scale(1.05); }
+    .photo-overlay {
+      position:absolute;inset:0;background:rgba(0,0,0,0.5);
+      display:flex;flex-direction:column;justify-content:flex-end;
+      padding:12px;opacity:0;transition:opacity 0.2s;
+    }
+    .photo-item:hover .photo-overlay { opacity:1; }
+    .photo-overlay .title { color:#fff;font-weight:700;font-size:0.9rem; }
+    .photo-overlay .meta { color:rgba(255,255,255,0.7);font-size:0.75rem; }
+    .delete-photo-btn {
+      position:absolute;top:8px;right:8px;
+      background:rgba(231,76,60,0.9);color:#fff;
+      border:none;border-radius:50%;width:28px;height:28px;
+      cursor:pointer;font-size:0.9rem;
+      display:none;align-items:center;justify-content:center;
+    }
+    .photo-item:hover .delete-photo-btn { display:flex; }
+    /* Lightbox */
+    .lightbox { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;align-items:center;justify-content:center;flex-direction:column; }
+    .lightbox.open { display:flex; }
+    .lightbox img { max-width:90vw;max-height:80vh;border-radius:8px;object-fit:contain; }
+    .lightbox-close { position:absolute;top:20px;right:24px;color:#fff;font-size:2rem;cursor:pointer; }
+    .upload-title-input { width:100%;margin-top:12px;padding:10px 14px;border:2px solid rgba(108,99,255,0.3);border-radius:10px;font-family:inherit;font-size:0.9rem;outline:none; }
+    .upload-title-input:focus { border-color:#6c63ff; }
+    .upload-btn { margin-top:10px;padding:10px 24px;background:#6c63ff;color:#fff;border:none;border-radius:10px;font-family:inherit;font-weight:700;cursor:pointer; }
+    .upload-btn:disabled { opacity:0.5;cursor:not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="app-wrapper">
+    <aside class="sidebar" id="sidebar"><!-- injected --></aside>
+
+    <main class="main-content">
+      <div class="page-header">
+        <h1>📸 Family Photos</h1>
+        <p style="color:#636e72;font-size:0.9rem">Your family's shared memories</p>
+      </div>
+
+      <!-- Upload zone -->
+      <div class="upload-zone" id="upload-zone" onclick="document.getElementById('file-input').click()">
+        <input type="file" id="file-input" accept="image/*" multiple />
+        <div class="icon">📤</div>
+        <strong>Click or drag photos here to upload</strong>
+        <p>JPG, PNG, GIF, WebP — up to 10MB each</p>
+        <input type="text" class="upload-title-input" id="upload-title" placeholder="Photo title (optional)" onclick="e => e.stopPropagation()" />
+        <button class="upload-btn" id="upload-btn" style="display:none" onclick="uploadFiles(event)">Upload Photos</button>
+      </div>
+
+      <div id="upload-progress" style="display:none;margin-bottom:16px;color:#6c63ff;font-weight:700"></div>
+
+      <!-- Photos grid -->
+      <div class="photo-grid-full" id="photo-grid">
+        <p style="color:#aaa">Loading photos…</p>
+      </div>
+    </main>
+  </div>
+
+  <!-- Lightbox -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <span class="lightbox-close">✕</span>
+    <img id="lightbox-img" src="" alt="" />
+    <div style="color:#fff;margin-top:10px;font-size:0.9rem" id="lightbox-caption"></div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/mobile-nav.js" defer></script>
+  <script>
+    if (!requireAuth()) throw new Error();
+    buildNav('photos');
+
+    let selectedFiles = [];
+    const fileInput = document.getElementById('file-input');
+    const uploadBtn = document.getElementById('upload-btn');
+    const zone = document.getElementById('upload-zone');
+
+    // Drag & drop
+    zone.addEventListener('dragover', (e) => { e.preventDefault(); zone.classList.add('drag-over'); });
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
+    zone.addEventListener('drop', (e) => {
+      e.preventDefault();
+      zone.classList.remove('drag-over');
+      selectedFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
+      if (selectedFiles.length) { uploadBtn.style.display = 'inline-block'; uploadBtn.textContent = `Upload ${selectedFiles.length} photo(s)`; }
+    });
+
+    fileInput.addEventListener('change', () => {
+      selectedFiles = Array.from(fileInput.files);
+      if (selectedFiles.length) { uploadBtn.style.display = 'inline-block'; uploadBtn.textContent = `Upload ${selectedFiles.length} photo(s)`; }
+    });
+
+    async function uploadFiles(e) {
+      e.stopPropagation();
+      if (!selectedFiles.length) return;
+      uploadBtn.disabled = true;
+      const prog = document.getElementById('upload-progress');
+      prog.style.display = 'block';
+      const title = document.getElementById('upload-title').value.trim();
+
+      for (let i = 0; i < selectedFiles.length; i++) {
+        prog.textContent = `Uploading ${i+1}/${selectedFiles.length}…`;
+        const fd = new FormData();
+        fd.append('image', selectedFiles[i]);
+        fd.append('title', title || selectedFiles[i].name);
+        try {
+          await api.uploadPhoto(fd);
+        } catch (err) {
+          showToast('Upload failed: ' + err.message);
+        }
+      }
+
+      prog.textContent = '✅ Upload complete!';
+      setTimeout(() => { prog.style.display = 'none'; }, 2000);
+      uploadBtn.disabled = false;
+      uploadBtn.style.display = 'none';
+      selectedFiles = [];
+      fileInput.value = '';
+      document.getElementById('upload-title').value = '';
+      await loadPhotos();
+    }
+
+    async function loadPhotos() {
+      const grid = document.getElementById('photo-grid');
+      try {
+        const photos = await api.getPhotos();
+        if (!photos.length) {
+          grid.innerHTML = '<p style="color:#aaa">No photos yet — upload your first one!</p>';
+          return;
+        }
+        grid.innerHTML = photos.map((p, i) => `
+          <div class="photo-item" onclick="openLightbox('${p.imageUrl}','${esc(p.title)}')">
+            <img src="${p.imageUrl}" alt="${esc(p.title)}" loading="lazy" />
+            <button class="delete-photo-btn" onclick="deletePhoto(event,'${p._id}')" title="Delete">🗑</button>
+            <div class="photo-overlay">
+              <div class="title">${esc(p.title)}</div>
+              <div class="meta">by ${esc(p.uploadedByName)} · ${fmtDate(p.uploadedAt)}</div>
+            </div>
+          </div>`).join('');
+      } catch (err) {
+        grid.innerHTML = `<p style="color:#e74c3c">Failed to load photos: ${err.message}</p>`;
+      }
+    }
+
+    async function deletePhoto(e, id) {
+      e.stopPropagation();
+      if (!confirm('Delete this photo?')) return;
+      try {
+        await api.deletePhoto(id);
+        showToast('Photo deleted');
+        await loadPhotos();
+      } catch (err) {
+        showToast('Delete failed: ' + err.message);
+      }
+    }
+
+    function openLightbox(url, caption) {
+      document.getElementById('lightbox-img').src = url;
+      document.getElementById('lightbox-caption').textContent = caption;
+      document.getElementById('lightbox').classList.add('open');
+    }
+    function closeLightbox() { document.getElementById('lightbox').classList.remove('open'); }
+
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
+
+    function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : ''; }
+
+    loadPhotos();
+  </script>
+</body>
+</html>

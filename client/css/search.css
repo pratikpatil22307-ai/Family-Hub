@@ -1,0 +1,59 @@
+/* Family Hub — Global Search styles (mobile-first) */
+.fh-search { position: relative; flex: 1 1 260px; max-width: 420px; margin: 0 12px; }
+.fh-search__box {
+  display: flex; align-items: center; gap: 8px;
+  background: rgba(255,255,255,0.18);
+  border: 1px solid rgba(255,255,255,0.28);
+  border-radius: 999px; padding: 6px 12px;
+  backdrop-filter: blur(8px);
+}
+.fh-search__icon { opacity: 0.9; }
+.fh-search__input {
+  flex: 1; background: transparent; border: 0; outline: none;
+  color: #fff; font: inherit; font-size: 0.95rem;
+}
+.fh-search__input::placeholder { color: rgba(255,255,255,0.75); }
+
+.fh-search__results {
+  position: absolute; top: calc(100% + 8px); left: 0; right: 0;
+  max-height: 60vh; overflow-y: auto;
+  background: #fff; color: #333;
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(0,0,0,0.25);
+  z-index: 1000; padding: 6px;
+}
+.fh-search__group { padding: 4px 0; }
+.fh-search__group-title {
+  font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.08em;
+  color: #999; padding: 6px 10px;
+}
+.fh-search__item {
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  grid-template-areas: "badge title date" "badge sub  date";
+  gap: 2px 10px;
+  align-items: center;
+  padding: 8px 10px; border-radius: 10px;
+  text-decoration: none; color: #222;
+}
+.fh-search__item:hover { background: #fff3ec; }
+.fh-search__badge {
+  grid-area: badge;
+  font-size: 0.65rem; font-weight: 700; text-transform: uppercase;
+  padding: 3px 7px; border-radius: 999px; color: #fff;
+  background: #c44569;
+}
+.fh-search__badge--event   { background: #e85d3a; }
+.fh-search__badge--photo   { background: #6c5ce7; }
+.fh-search__badge--message { background: #2dd4a8; color: #0a3a2a; }
+.fh-search__badge--member  { background: #f59e0b; }
+.fh-search__title { grid-area: title; font-weight: 600; }
+.fh-search__sub   { grid-area: sub;   font-size: 0.8rem; color: #777; }
+.fh-search__date  { grid-area: date;  font-size: 0.75rem; color: #999; white-space: nowrap; }
+.fh-search__empty { padding: 14px; text-align: center; color: #888; }
+mark { background: #ffe27a; padding: 0 2px; border-radius: 3px; }
+
+@media (max-width: 640px) {
+  .fh-search { width: 100%; max-width: none; margin: 8px 0; flex-basis: 100%; }
+  .fh-search__results { position: fixed; left: 8px; right: 8px; top: 64px; max-height: 70vh; }
+}

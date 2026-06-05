@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family Hub — Dashboard</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/family-hub.css" />
+  <link rel="stylesheet" href="css/notifications.css" />
+  <link rel="stylesheet" href="css/mobile.css" />
+  <link rel="stylesheet" href="css/search.css" />
+  <style>
+    .stat-live { transition: all 0.4s ease; }
+    .loading-pulse { animation: pulse 1.2s ease-in-out infinite; }
+    @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+    .invite-banner {
+      background: linear-gradient(135deg,#6c63ff,#764ba2);
+      color:#fff;
+      border-radius:14px;
+      padding:16px 22px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:20px;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+    .invite-banner strong { font-size:1.1rem; }
+    .invite-banner .code { font-size:1.3rem; letter-spacing:3px; font-weight:800; }
+    .copy-btn {
+      background:rgba(255,255,255,0.25);
+      border:none;
+      color:#fff;
+      padding:8px 16px;
+      border-radius:8px;
+      cursor:pointer;
+      font-family:inherit;
+      font-weight:700;
+    }
+    .copy-btn:hover { background:rgba(255,255,255,0.4); }
+    .upcoming-event-item {
+      display:flex;
+      justify-content:space-between;
+      padding:8px 0;
+      border-bottom:1px solid rgba(255,255,255,0.1);
+      font-size:0.9rem;
+    }
+    .upcoming-event-item:last-child { border-bottom:none; }
+  </style>
+</head>
+<body>
+  <header>
+    <span class="header-title">🏠 Family Hub</span>
+    <div class="header-status">
+      <span class="status-dot"></span>
+      <span id="memberOnlineCount">Loading…</span>
+    </div>
+  </header>
+
+  <div class="layout">
+    <nav class="sidebar"><!-- injected by nav.js --></nav>
+
+    <main class="main">
+      <div class="page-header">
+        <h1 class="page-title">Dashboard</h1>
+        <p class="page-sub" id="welcome-msg">Welcome back!</p>
+      </div>
+
+      <!-- Invite code banner -->
+      <div class="invite-banner" id="invite-banner" style="display:none">
+        <div>
+          <div><strong>🔑 Your Family Invite Code</strong></div>
+          <div class="code" id="banner-code">—</div>
+          <small>Share this code with family members to join</small>
+        </div>
+        <button class="copy-btn" onclick="copyCode()">Copy Code</button>
+      </div>
+
+      <!-- Stats cards -->
+      <div class="stats-bar" style="margin-bottom:24px">
+        <div class="stat-box">
+          <div class="stat-number stat-live loading-pulse" id="stat-members">—</div>
+          <div class="stat-label">Family Members</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number stat-live loading-pulse" id="stat-events">—</div>
+          <div class="stat-label">Upcoming Events</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number stat-live loading-pulse" id="stat-photos">—</div>
+          <div class="stat-label">Photos Shared</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-number stat-live loading-pulse" id="stat-messages">—</div>
+          <div class="stat-label">Messages Today</div>
+        </div>
+      </div>
+
+      <!-- Cards grid -->
+      <div class="cards-grid">
+        <!-- Upcoming events -->
+        <section class="card events" aria-label="Upcoming Events">
+          <div class="card-header">
+            <span class="card-icon">📌</span>
+            <span class="card-title">Upcoming Events</span>
+          </div>
+          <div id="upcoming-events-list"><div class="loading-pulse" style="color:#aaa">Loading…</div></div>
+          <a href="events.html" class="card-link">View all events →</a>
+        </section>
+
+        <!-- Recent photos -->
+        <section class="card photos" aria-label="Recent Photos">
+          <div class="card-header">
+            <span class="card-icon">📷</span>
+            <span class="card-title">Recent Photos</span>
+          </div>
+          <div class="photo-grid" id="photo-grid">
+            <div class="loading-pulse" style="color:#aaa;grid-column:span 3">Loading…</div>
+          </div>
+          <a href="photos.html" class="card-link">View all photos →</a>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/mobile-nav.js" defer></script>
+  <script>
+    if (!requireAuth()) throw new Error('Not authenticated');
+
+    const user = getUser();
+    buildNav('dashboard');
+
+    // Welcome message
+    document.getElementById('welcome-msg').textContent = `Welcome back, ${user.name}!`;
+
+    // Show invite code if admin
+    if (user.inviteCode) {
+      document.getElementById('invite-banner').style.display = 'flex';
+      document.getElementById('banner-code').textContent = user.inviteCode;
+    }
+
+    function copyCode() {
+      navigator.clipboard.writeText(user.inviteCode).then(() => showToast('Invite code copied!'));
+    }
+
+    // Load stats
+    async function loadDashboard() {
+      try {
+        const stats = await api.getStats();
+
+        document.getElementById('stat-members').textContent = stats.memberCount;
+        document.getElementById('stat-events').textContent = stats.upcomingEvents;
+        document.getElementById('stat-photos').textContent = stats.totalPhotos;
+        document.getElementById('stat-messages').textContent = stats.todayMessages;
+        document.getElementById('memberOnlineCount').textContent = `${stats.memberCount} member${stats.memberCount !== 1 ? 's' : ''}`;
+
+        // Stop pulse
+        document.querySelectorAll('.loading-pulse').forEach(el => el.classList.remove('loading-pulse'));
+
+        // Upcoming events list
+        const ul = document.getElementById('upcoming-events-list');
+        if (stats.nextEvents && stats.nextEvents.length) {
+          ul.innerHTML = stats.nextEvents.map(ev => `
+            <div class="upcoming-event-item">
+              <span>${escHtml(ev.title)}</span>
+              <span class="card-item-meta">${new Date(ev.startDate).toLocaleDateString('en-IN', {day:'numeric',month:'short'})}</span>
+            </div>`).join('');
+        } else {
+          ul.innerHTML = '<p style="color:#aaa;font-size:0.9rem">No upcoming events</p>';
+        }
+
+        // Recent photos
+        const photos = await api.getPhotos();
+        const grid = document.getElementById('photo-grid');
+        if (photos.length) {
+          grid.innerHTML = photos.slice(0, 6).map(p => `
+            <div class="photo-thumb" style="background:url('${p.imageUrl}') center/cover no-repeat;border-radius:8px;height:56px;width:100%"></div>
+          `).join('');
+        } else {
+          grid.innerHTML = '<p style="color:#aaa;font-size:0.85rem;grid-column:span 3">No photos yet</p>';
+        }
+      } catch (err) {
+        console.error('Dashboard load error:', err);
+      }
+    }
+
+    function escHtml(s) {
+      return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+    }
+
+    loadDashboard();
+  </script>
+</body>
+</html>

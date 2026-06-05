@@ -1,0 +1,10 @@
+{
+  "name": "family-hub",
+  "version": "2.0.0",
+  "description": "Family Hub Full-Stack Application",
+  "scripts": {
+    "install:server": "cd server && npm install",
+    "dev": "cd server && npm run dev",
+    "start": "cd server && npm start"
+  }
+}

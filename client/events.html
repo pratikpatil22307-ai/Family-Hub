@@ -1,0 +1,198 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Family Hub — Events</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/events.css" />
+  <link rel="stylesheet" href="css/mobile.css" />
+  <link rel="stylesheet" href="css/search.css" />
+</head>
+<body>
+  <div class="container">
+    <div class="sidebar" id="sidebar"><!-- injected --></div>
+    <div class="events-layout">
+      <section class="create-card glass">
+        <h1>🎉 New event</h1>
+        <p class="muted">Propose a plan for the family.</p>
+        <div id="form-error" class="form-error" style="display:none"></div>
+        <form id="event-form">
+          <input type="hidden" id="edit-id" />
+          <div class="field"><label>Title</label><input name="title" required placeholder="Summer beach trip" /></div>
+          <div class="field"><label>Description</label><textarea name="description" rows="3" placeholder="Details, ideas…"></textarea></div>
+          <div class="row">
+            <div class="field"><label>Category</label>
+              <select name="category" id="category" required>
+                <option>Vacation</option><option>Birthday</option><option>Anniversary</option>
+                <option>Trip</option><option>Get-together</option><option>Other</option>
+              </select>
+            </div>
+            <div class="field" id="sub-wrap" style="display:none"><label>Trip type</label>
+              <select name="subCategory" id="subCategory">
+                <option value="">—</option><option>Hotel</option><option>Resort</option><option>Restaurant</option>
+              </select>
+            </div>
+          </div>
+          <div class="row">
+            <div class="field"><label>Start date</label><input type="date" name="startDate" required /></div>
+            <div class="field"><label>End date (optional)</label><input type="date" name="endDate" /></div>
+          </div>
+          <div class="field"><label>Location (optional)</label><input name="location" placeholder="Where?" /></div>
+          <div style="display:flex;gap:10px">
+            <button class="btn btn-primary" type="submit" id="submit-btn">＋ Create event</button>
+            <button class="btn" type="button" id="cancel-edit-btn" style="display:none;background:#dfe6e9" onclick="cancelEdit()">✕ Cancel</button>
+          </div>
+        </form>
+      </section>
+
+      <section class="list-card glass">
+        <h1>📋 Family events</h1>
+        <div class="filters">
+          <input id="search" placeholder="🔎 Search title or description" />
+          <select id="filter-cat">
+            <option value="">All categories</option>
+            <option>Vacation</option><option>Birthday</option><option>Anniversary</option>
+            <option>Trip</option><option>Get-together</option><option>Other</option>
+          </select>
+        </div>
+        <div id="event-list" class="event-list"><p style="color:#aaa">Loading events…</p></div>
+      </section>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/mobile-nav.js" defer></script>
+  <script>
+    if (!requireAuth()) throw new Error();
+    buildNav('events');
+
+    const form = document.getElementById('event-form');
+    const listEl = document.getElementById('event-list');
+    const searchEl = document.getElementById('search');
+    const filterCat = document.getElementById('filter-cat');
+    const formErr = document.getElementById('form-error');
+    let events = [];
+    let debounceTimer;
+
+    // Category → show subCategory
+    document.getElementById('category').addEventListener('change', function() {
+      document.getElementById('sub-wrap').style.display = this.value === 'Trip' ? 'block' : 'none';
+    });
+
+    async function loadEvents() {
+      const params = {};
+      if (searchEl.value.trim()) params.search = searchEl.value.trim();
+      if (filterCat.value) params.category = filterCat.value;
+      try {
+        events = await api.getEvents(params);
+        renderEvents();
+      } catch (err) {
+        listEl.innerHTML = `<p style="color:#e74c3c">Failed to load events: ${err.message}</p>`;
+      }
+    }
+
+    function renderEvents() {
+      if (!events.length) {
+        listEl.innerHTML = '<p style="color:#aaa;padding:20px 0">No events found. Create one!</p>';
+        return;
+      }
+      listEl.innerHTML = events.map(ev => `
+        <div class="event-card" data-id="${ev._id}">
+          <div class="event-header">
+            <div>
+              <span class="event-cat-badge">${esc(ev.category)}</span>
+              <strong>${esc(ev.title)}</strong>
+            </div>
+            <div class="event-actions">
+              <button onclick="editEvent('${ev._id}')" title="Edit">✏️</button>
+              <button onclick="deleteEvent('${ev._id}')" title="Delete">🗑️</button>
+            </div>
+          </div>
+          ${ev.description ? `<p class="event-desc">${esc(ev.description)}</p>` : ''}
+          <div class="event-meta">
+            <span>📅 ${fmtDate(ev.startDate)}${ev.endDate ? ' → ' + fmtDate(ev.endDate) : ''}</span>
+            ${ev.location ? `<span>📍 ${esc(ev.location)}</span>` : ''}
+            <span style="color:#aaa;font-size:0.8rem">by ${esc(ev.createdByName || 'Family')}</span>
+          </div>
+        </div>`).join('');
+    }
+
+    // Create / update
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      formErr.style.display = 'none';
+      const btn = document.getElementById('submit-btn');
+      btn.disabled = true;
+
+      const fd = new FormData(form);
+      const payload = Object.fromEntries(fd.entries());
+      const editId = document.getElementById('edit-id').value;
+
+      try {
+        if (editId) {
+          await api.updateEvent(editId, payload);
+          showToast('Event updated!');
+          cancelEdit();
+        } else {
+          await api.createEvent(payload);
+          showToast('Event created!');
+          form.reset();
+        }
+        await loadEvents();
+      } catch (err) {
+        formErr.textContent = err.message;
+        formErr.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+      }
+    });
+
+    function editEvent(id) {
+      const ev = events.find(e => e._id === id);
+      if (!ev) return;
+      document.getElementById('edit-id').value = ev._id;
+      form.querySelector('[name=title]').value = ev.title;
+      form.querySelector('[name=description]').value = ev.description || '';
+      form.querySelector('[name=category]').value = ev.category;
+      form.querySelector('[name=startDate]').value = ev.startDate?.substring(0, 10) || '';
+      form.querySelector('[name=endDate]').value = ev.endDate?.substring(0, 10) || '';
+      form.querySelector('[name=location]').value = ev.location || '';
+      document.getElementById('submit-btn').textContent = '💾 Update event';
+      document.getElementById('cancel-edit-btn').style.display = 'inline-block';
+      form.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function cancelEdit() {
+      document.getElementById('edit-id').value = '';
+      form.reset();
+      document.getElementById('submit-btn').textContent = '＋ Create event';
+      document.getElementById('cancel-edit-btn').style.display = 'none';
+    }
+
+    async function deleteEvent(id) {
+      if (!confirm('Delete this event?')) return;
+      try {
+        await api.deleteEvent(id);
+        showToast('Event deleted');
+        await loadEvents();
+      } catch (err) {
+        showToast('Failed to delete: ' + err.message);
+      }
+    }
+
+    // Search & filter with debounce
+    searchEl.addEventListener('input', () => {
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(loadEvents, 300);
+    });
+    filterCat.addEventListener('change', loadEvents);
+
+    function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+    function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : ''; }
+
+    loadEvents();
+  </script>
+</body>
+</html>

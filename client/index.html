@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family Hub — Calendar</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/style.css" />
+  <link rel="stylesheet" href="css/mobile.css" />
+  <style>
+    .calendar-layout { display:flex; min-height:100vh; }
+    .cal-sidebar {
+      width:240px; flex-shrink:0;
+      background:rgba(255,255,255,0.12);
+      backdrop-filter:blur(12px);
+      border-right:1px solid rgba(255,255,255,0.2);
+      padding:20px 0;
+    }
+    .cal-main { flex:1; padding:20px; overflow-y:auto; }
+    .top-header { text-align:center; color:white; margin-bottom:20px; }
+    .top-header h1 { font-size:1.5rem; font-weight:800; }
+    .cal-nav-item {
+      display:flex; align-items:center; gap:10px;
+      padding:12px 20px; color:rgba(255,255,255,0.85);
+      text-decoration:none; font-weight:600;
+      transition:background 0.2s;
+      cursor:pointer;
+    }
+    .cal-nav-item:hover, .cal-nav-item.active {
+      background:rgba(255,255,255,0.15); color:#fff;
+    }
+    .cal-nav-section { padding:16px 20px 4px; font-size:0.75rem; color:rgba(255,255,255,0.5); font-weight:700; text-transform:uppercase; }
+    .cal-nav-divider { border:none; border-top:1px solid rgba(255,255,255,0.15); margin:8px 0; }
+    .logout-item { color:rgba(231,76,60,0.9) !important; }
+  </style>
+</head>
+<body>
+  <div class="calendar-layout">
+    <!-- Sidebar -->
+    <div class="cal-sidebar" id="cal-sidebar">
+      <div style="padding:20px;text-align:center;font-size:1.8rem">🏠</div>
+      <div class="cal-nav-section">Menu</div>
+      <a href="family-hub.html" class="cal-nav-item">🏡 Dashboard</a>
+      <a href="index.html" class="cal-nav-item active">📅 Calendar</a>
+      <a href="events.html" class="cal-nav-item">🎉 Events</a>
+      <a href="photos.html" class="cal-nav-item">🖼️ Photos</a>
+      <a href="chat.html" class="cal-nav-item">💬 Chat</a>
+      <hr class="cal-nav-divider" />
+      <div class="cal-nav-section">Account</div>
+      <div class="cal-nav-item" id="nav-user-name-cal"></div>
+      <div class="cal-nav-item logout-item" onclick="logout()" style="cursor:pointer">🚪 Logout</div>
+    </div>
+
+    <!-- Main calendar -->
+    <div class="cal-main">
+      <div class="top-header">
+        <h1>📅 Family Calendar 2024</h1>
+        <p style="opacity:0.8;font-size:0.9rem">Click a date to highlight · Double-click to add a note · Right-click to flag ⭐</p>
+      </div>
+      <div class="calendar-container" id="calendarContainer"></div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    if (!requireAuth()) throw new Error();
+    const user = getUser();
+    document.getElementById('nav-user-name-cal').textContent = '👤 ' + user.name;
+  </script>
+  <script src="js/script.js"></script>
+</body>
+</html>

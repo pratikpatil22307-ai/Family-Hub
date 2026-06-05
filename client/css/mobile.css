@@ -1,0 +1,375 @@
+/* ================================================================
+   FAMILY HUB — mobile.css
+   Shared mobile-responsive layer applied to ALL pages.
+
+   This file is the single source of truth for:
+     • Hamburger button appearance
+     • Sidebar slide-in overlay behaviour
+     • Backdrop (dim layer behind open sidebar)
+     • Tablet narrowing of the sidebar
+     • Mobile content padding adjustments
+
+   HOW IT PLUGS IN:
+   Add  <link rel="stylesheet" href="css/mobile.css">  in every
+   page's <head>, AFTER the page's own stylesheet so these rules
+   can safely override where needed.
+
+   The JS counterpart is  js/mobile-nav.js  which adds/removes
+   the CSS classes that trigger animations.
+================================================================ */
+
+
+/* ================================================================
+   1. HAMBURGER BUTTON
+   Hidden on desktop; shown on ≤ 768 px via media query below.
+   It sits inside the <header> / topbar on every page.
+================================================================ */
+
+/* The button itself */
+.hamburger-btn {
+  /* Hidden by default — only shown on mobile (see media query) */
+  display: none;
+
+  /* Reset browser defaults */
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 6px 8px;
+  border-radius: 8px;
+
+  /* Flex: stack the three lines vertically */
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 5px;
+
+  /* Smooth hover feedback */
+  transition: background-color 0.15s ease;
+
+  /* Ensure it sits above everything */
+  z-index: 10;
+}
+
+/* Hover state */
+.hamburger-btn:hover {
+  background-color: rgba(255, 255, 255, 0.15);
+}
+
+/* Active/pressed state */
+.hamburger-btn:active {
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+/* Each of the three horizontal bars */
+.hamburger-btn__bar {
+  display: block;
+  width: 22px;
+  height: 2px;
+  background-color: #ffd4c4;   /* --accent-soft equivalent */
+  border-radius: 2px;
+
+  /* Each bar transitions independently for the X animation */
+  transition: transform  0.28s cubic-bezier(0.4, 0, 0.2, 1),
+              opacity    0.20s ease,
+              width      0.20s ease;
+
+  transform-origin: center;
+}
+
+/* ── "X" close state — triggered by .hamburger-btn--open ── */
+
+/* Top bar: rotate +45° and shift down to cross middle */
+.hamburger-btn--open .hamburger-btn__bar:nth-child(1) {
+  transform: translateY(7px) rotate(45deg);
+}
+
+/* Middle bar: fade out */
+.hamburger-btn--open .hamburger-btn__bar:nth-child(2) {
+  opacity: 0;
+  width: 0;
+}
+
+/* Bottom bar: rotate -45° and shift up to cross middle */
+.hamburger-btn--open .hamburger-btn__bar:nth-child(3) {
+  transform: translateY(-7px) rotate(-45deg);
+}
+
+
+/* ================================================================
+   2. BACKDROP (dim overlay behind the open sidebar)
+   Clicking it closes the sidebar — just like Notion / Discord.
+================================================================ */
+.sidebar-backdrop {
+  /* Invisible until needed */
+  display: none;
+
+  /* Cover the entire viewport */
+  position: fixed;
+  inset: 0;             /* shorthand for top/right/bottom/left: 0 */
+
+  /* Semi-transparent black */
+  background-color: rgba(0, 0, 0, 0.45);
+
+  /* Must be above page content but below the sidebar */
+  z-index: 199;
+
+  /* Smooth fade */
+  opacity: 0;
+  transition: opacity 0.28s ease;
+}
+
+/* When visible (JS adds .sidebar-backdrop--visible) */
+.sidebar-backdrop--visible {
+  display: block;
+  opacity: 1;
+}
+
+
+/* ================================================================
+   3. SIDEBAR — MOBILE OVERLAY BEHAVIOUR
+   On mobile, the sidebar:
+     • Starts off-screen to the left (translateX(-100%))
+     • Slides in when .sidebar--open is added by JS
+     • Sits on top of content (position: fixed + high z-index)
+
+   These rules override the desktop sidebar styles.
+   The desktop styles (fixed width, part of flex layout) are
+   unaffected at ≥ 769 px.
+================================================================ */
+
+/* ── Tablet: keep sidebar visible but narrower ── */
+@media (max-width: 900px) {
+
+  /* Slightly tighter sidebar on tablets */
+  .sidebar,
+  nav.sidebar {
+    width: 190px !important;
+    min-width: 190px !important;
+    padding: 16px 8px !important;
+  }
+
+  /* Slightly smaller nav item text */
+  .nav-item {
+    font-size: 0.88rem !important;
+    padding: 9px 10px !important;
+  }
+
+  /* Tighten main content padding */
+  main {
+    padding: 24px 20px !important;
+  }
+}
+
+
+/* ── Mobile: hide sidebar completely, show hamburger ── */
+@media (max-width: 768px) {
+
+  /* ── Show the hamburger button ── */
+  .hamburger-btn {
+    display: flex !important;
+  }
+
+  /* ── Take sidebar out of the flex flow, position it as overlay ── */
+  .sidebar,
+  nav.sidebar,
+  aside.sidebar {
+    /* Fixed: takes sidebar out of normal document flow          */
+    position: fixed !important;
+
+    /* Always fill the full viewport height                     */
+    top: 0 !important;
+    bottom: 0 !important;
+    left: 0 !important;
+
+    /* Restore full width so it reads comfortably on phones     */
+    width: 240px !important;
+    min-width: 240px !important;
+
+    /* Above the backdrop (199) and below nothing               */
+    z-index: 200 !important;
+
+    /* Slide off-screen to the LEFT by default                  */
+    transform: translateX(-100%) !important;
+
+    /* Smooth slide animation                                   */
+    transition: transform 0.30s cubic-bezier(0.4, 0, 0.2, 1) !important;
+
+    /* Keep sidebar scroll independent from main content        */
+    overflow-y: auto !important;
+
+    /* Ensure it paints above backdrop shadow                   */
+    box-shadow: none;
+  }
+
+  /* ── Open state: slide sidebar into view ── */
+  .sidebar--open,
+  nav.sidebar--open,
+  aside.sidebar--open {
+    transform: translateX(0) !important;
+    box-shadow: 4px 0 32px rgba(0, 0, 0, 0.35) !important;
+  }
+
+  /* ── Prevent body scroll when sidebar is open ── */
+  body.sidebar-is-open {
+    overflow: hidden;
+  }
+
+  /* ── Main content: full width on mobile ── */
+  main {
+    padding: 20px 16px !important;
+  }
+
+  /* ── Layout wrapper: main takes full width (sidebar is floating) ── */
+  .layout {
+    /* The layout flex still works; sidebar is now out of flow  */
+    overflow: visible !important;
+  }
+
+  /* ── Photos page: app-wrapper ── */
+  .app-wrapper {
+    display: block !important;     /* stacked, not side by side */
+  }
+
+  /* ── Chat page: chat-interface ── */
+  .chat-interface {
+    flex-direction: column !important;
+  }
+
+  /* ── Events page: events-layout ── */
+  .events-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  /* ── Cards stack to single column ── */
+  .cards-grid {
+    flex-direction: column !important;
+  }
+
+  /* ── Stats bar: 2-column grid on mobile ── */
+  .stats-bar {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* ── Notification panel: ensure it doesn't overflow ── */
+  .notif-panel {
+    width: calc(100vw - 32px) !important;
+    right: -8px !important;
+  }
+}
+
+
+/* ================================================================
+   4. HEADER ADJUSTMENTS
+   On mobile we need room for the hamburger on the left.
+   The header already uses  justify-content: space-between,
+   so the hamburger slot just needs to exist.
+================================================================ */
+@media (max-width: 768px) {
+
+  header {
+    padding: 0 14px !important;
+    gap: 10px !important;
+  }
+
+  .header-title {
+    font-size: 1.1rem !important;
+  }
+
+  /* The notification bell wrap: shrink a touch */
+  .notif-bell-wrap {
+    margin-right: 4px !important;
+  }
+
+  /* "4 members online" text: hide label on very small screens */
+  @media (max-width: 400px) {
+    .header-status span:last-child {
+      display: none;
+    }
+  }
+}
+
+
+/* ================================================================
+   5. PHOTOS PAGE — specific mobile fixes
+   photos.html has its own topbar inside <main>.
+   On mobile the built-in topbar__menu-btn already exists
+   (from the original photos.js implementation), so we
+   just make sure the app-wrapper and sidebar behave correctly.
+================================================================ */
+@media (max-width: 768px) {
+
+  /* Sidebar in photos page uses  aside.sidebar  */
+  .app-wrapper aside.sidebar {
+    /* Already covered by the general sidebar rules above */
+  }
+
+  /* Give the main-content area full width */
+  .main-content {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  /* The photos topbar already has a hamburger; hide our injected one
+     on this specific page to avoid duplication */
+  .photos-page .hamburger-btn {
+    display: none !important;
+  }
+}
+
+
+/* ================================================================
+   6. CHAT PAGE — specific mobile fixes
+================================================================ */
+@media (max-width: 768px) {
+
+  /* Stack the chat sidebar (channels list) below the chat window */
+  .chat-interface {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* Give the chat sidebar full width when stacked */
+  .chat-sidebar {
+    width: 100% !important;
+    min-width: 0 !important;
+    max-height: 160px !important;   /* compact list */
+  }
+}
+
+
+/* ================================================================
+   7. EVENTS PAGE — specific mobile fixes
+================================================================ */
+@media (max-width: 768px) {
+
+  /* Stack create-form above events list */
+  .events-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 20px !important;
+  }
+
+  /* Form card no longer sticky on mobile */
+  .create-card {
+    position: static !important;
+  }
+}
+
+
+/* ================================================================
+   8. SMOOTH TRANSITION FOR MAIN CONTENT PUSH (optional)
+   On tablet, if you prefer the content to shrink when sidebar
+   opens rather than overlay, enable this block.
+   Currently disabled — sidebar is a pure overlay on all mobile.
+================================================================ */
+/*
+@media (max-width: 768px) {
+  main {
+    transition: margin-left 0.30s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  body.sidebar-is-open main {
+    margin-left: 240px;
+  }
+}
+*/

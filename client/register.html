@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family Hub — Create Account</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card register-card">
+      <div class="auth-logo">🏠</div>
+      <h1 class="auth-title">Join Family Hub</h1>
+      <p class="auth-subtitle">Create your account and connect with your family.</p>
+
+      <div id="error-msg" class="alert alert-error" style="display:none"></div>
+      <div id="success-msg" class="alert alert-success" style="display:none"></div>
+
+      <form id="register-form" novalidate>
+        <div class="field">
+          <label for="name">Your name</label>
+          <input type="text" id="name" name="name" placeholder="e.g. Priya Patil" required />
+        </div>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required />
+        </div>
+        <div class="field">
+          <label for="password">Password <small>(min 6 characters)</small></label>
+          <div class="password-wrap">
+            <input type="password" id="password" name="password" placeholder="••••••••" required />
+            <button type="button" class="toggle-pw" onclick="togglePw('password', this)" aria-label="Show/hide">👁</button>
+          </div>
+        </div>
+
+        <!-- Family choice tabs -->
+        <div class="family-tabs">
+          <button type="button" class="tab-btn active" id="tab-create" onclick="switchTab('create')">🏡 Create Family</button>
+          <button type="button" class="tab-btn" id="tab-join" onclick="switchTab('join')">🔑 Join Family</button>
+        </div>
+
+        <div id="panel-create" class="tab-panel">
+          <div class="field">
+            <label for="familyName">Family name</label>
+            <input type="text" id="familyName" name="familyName" placeholder="e.g. The Patil Family" />
+            <small class="hint">An invite code will be generated automatically.</small>
+          </div>
+        </div>
+
+        <div id="panel-join" class="tab-panel" style="display:none">
+          <div class="field">
+            <label for="inviteCode">Invite code</label>
+            <input type="text" id="inviteCode" name="inviteCode" placeholder="e.g. PATIL-7X9A" style="text-transform:uppercase" />
+            <small class="hint">Ask a family member for their invite code.</small>
+          </div>
+        </div>
+
+        <button type="submit" class="btn-primary" id="submit-btn">
+          <span class="btn-text">Create Account</span>
+          <span class="spinner" style="display:none">⏳</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Already have an account? <a href="login.html">Sign in →</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    if (getToken() && getUser()) window.location.href = '/family-hub.html';
+
+    let currentTab = 'create';
+
+    function switchTab(tab) {
+      currentTab = tab;
+      document.getElementById('panel-create').style.display = tab === 'create' ? 'block' : 'none';
+      document.getElementById('panel-join').style.display = tab === 'join' ? 'block' : 'none';
+      document.getElementById('tab-create').classList.toggle('active', tab === 'create');
+      document.getElementById('tab-join').classList.toggle('active', tab === 'join');
+    }
+
+    document.getElementById('register-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errEl = document.getElementById('error-msg');
+      const okEl  = document.getElementById('success-msg');
+      errEl.style.display = 'none';
+      okEl.style.display = 'none';
+      btn.disabled = true;
+      btn.querySelector('.btn-text').style.display = 'none';
+      btn.querySelector('.spinner').style.display = 'inline';
+
+      const payload = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        password: document.getElementById('password').value,
+        action: currentTab,
+        familyName: document.getElementById('familyName').value.trim(),
+        inviteCode: document.getElementById('inviteCode').value.trim().toUpperCase(),
+      };
+
+      try {
+        const data = await api.register(payload);
+        setAuth(data.token, data.user);
+        if (data.user.inviteCode) {
+          okEl.textContent = `✅ Account created! Your family invite code is: ${data.user.inviteCode}`;
+          okEl.style.display = 'block';
+          setTimeout(() => window.location.href = '/family-hub.html', 2500);
+        } else {
+          window.location.href = '/family-hub.html';
+        }
+      } catch (err) {
+        errEl.textContent = err.message || 'Registration failed. Please try again.';
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.querySelector('.btn-text').style.display = 'inline';
+        btn.querySelector('.spinner').style.display = 'none';
+      }
+    });
+
+    function togglePw(id, btn) {
+      const inp = document.getElementById(id);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+    }
+  </script>
+</body>
+</html>

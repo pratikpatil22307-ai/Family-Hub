@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family Hub — Sign In</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/auth.css" />
+</head>
+<body>
+  <div class="auth-wrapper">
+    <div class="auth-card">
+      <div class="auth-logo">🏠</div>
+      <h1 class="auth-title">Family Hub</h1>
+      <p class="auth-subtitle">Welcome back! Sign in to your family space.</p>
+
+      <div id="error-msg" class="alert alert-error" style="display:none"></div>
+
+      <form id="login-form" novalidate>
+        <div class="field">
+          <label for="email">Email address</label>
+          <input type="email" id="email" name="email" placeholder="you@example.com" required autocomplete="email" />
+        </div>
+        <div class="field">
+          <label for="password">Password</label>
+          <div class="password-wrap">
+            <input type="password" id="password" name="password" placeholder="••••••••" required autocomplete="current-password" />
+            <button type="button" class="toggle-pw" onclick="togglePw('password', this)" aria-label="Show/hide password">👁</button>
+          </div>
+        </div>
+        <button type="submit" class="btn-primary" id="submit-btn">
+          <span class="btn-text">Sign In</span>
+          <span class="spinner" style="display:none">⏳</span>
+        </button>
+      </form>
+
+      <div class="auth-footer">
+        Don't have an account? <a href="register.html">Create one →</a>
+      </div>
+    </div>
+  </div>
+
+  <script src="js/api.js"></script>
+  <script>
+    // If already logged in, redirect to dashboard
+    if (getToken() && getUser()) window.location.href = '/family-hub.html';
+
+    document.getElementById('login-form').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const btn = document.getElementById('submit-btn');
+      const errEl = document.getElementById('error-msg');
+      errEl.style.display = 'none';
+      btn.disabled = true;
+      btn.querySelector('.btn-text').style.display = 'none';
+      btn.querySelector('.spinner').style.display = 'inline';
+
+      const email = document.getElementById('email').value.trim();
+      const password = document.getElementById('password').value;
+
+      try {
+        const data = await api.login(email, password);
+        setAuth(data.token, data.user);
+        window.location.href = '/family-hub.html';
+      } catch (err) {
+        errEl.textContent = err.message || 'Login failed. Please try again.';
+        errEl.style.display = 'block';
+      } finally {
+        btn.disabled = false;
+        btn.querySelector('.btn-text').style.display = 'inline';
+        btn.querySelector('.spinner').style.display = 'none';
+      }
+    });
+
+    function togglePw(id, btn) {
+      const inp = document.getElementById(id);
+      inp.type = inp.type === 'password' ? 'text' : 'password';
+      btn.textContent = inp.type === 'password' ? '👁' : '🙈';
+    }
+  </script>
+</body>
+</html>
