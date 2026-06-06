@@ -33,7 +33,7 @@
     }
     .photo-item img { width:100%; height:100%; object-fit:cover; transition:transform 0.3s; }
     .photo-item:hover img { transform:scale(1.05); }
-    .photo-overlay {
+    .photo-overlay {z-index: 1;
       position:absolute;inset:0;background:rgba(0,0,0,0.5);
       display:flex;flex-direction:column;justify-content:flex-end;
       padding:12px;opacity:0;transition:opacity 0.2s;
@@ -42,12 +42,24 @@
     .photo-overlay .title { color:#fff;font-weight:700;font-size:0.9rem; }
     .photo-overlay .meta { color:rgba(255,255,255,0.7);font-size:0.75rem; }
     .delete-photo-btn {
-      position:absolute;top:8px;right:8px;
-      background:rgba(231,76,60,0.9);color:#fff;
-      border:none;border-radius:50%;width:28px;height:28px;
-      cursor:pointer;font-size:0.9rem;
-      display:none;align-items:center;justify-content:center;
-    }
+  position:absolute;
+  top:8px;
+  right:8px;
+
+  z-index:100;
+
+  background:rgba(231,76,60,0.9);
+  color:#fff;
+  border:none;
+  border-radius:50%;
+  width:28px;
+  height:28px;
+  cursor:pointer;
+
+  display:none;
+  align-items:center;
+  justify-content:center;
+}
     .photo-item:hover .delete-photo-btn { display:flex; }
     /* Lightbox */
     .lightbox { display:none;position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:1000;align-items:center;justify-content:center;flex-direction:column; }
@@ -161,15 +173,23 @@
           grid.innerHTML = '<p style="color:#aaa">No photos yet — upload your first one!</p>';
           return;
         }
-        grid.innerHTML = photos.map((p, i) => `
-          <div class="photo-item" onclick="openLightbox('${p.imageUrl}','${esc(p.title)}')">
-            <img src="${p.imageUrl}" alt="${esc(p.title)}" loading="lazy" />
-            <button class="delete-photo-btn" onclick="deletePhoto(event,'${p._id}')" title="Delete">🗑</button>
-            <div class="photo-overlay">
-              <div class="title">${esc(p.title)}</div>
-              <div class="meta">by ${esc(p.uploadedByName)} · ${fmtDate(p.uploadedAt)}</div>
-            </div>
-          </div>`).join('');
+        grid.innerHTML = photos.map((p) => `
+  <div class="photo-item" onclick="openLightbox('http://localhost:5000${p.imageUrl}','${esc(p.title)}')">
+    <img src="http://localhost:5000${p.imageUrl}"
+         alt="${esc(p.title)}"
+         loading="lazy" />
+    <button class="delete-photo-btn"
+            onclick="deletePhoto(event,'${p._id}')"
+            title="Delete">🗑</button>
+
+    <div class="photo-overlay">
+      <div class="title">${esc(p.title)}</div>
+      <div class="meta">
+        by ${esc(p.uploadedByName)} · ${fmtDate(p.uploadedAt)}
+      </div>
+    </div>
+  </div>
+`).join('');
       } catch (err) {
         grid.innerHTML = `<p style="color:#e74c3c">Failed to load photos: ${err.message}</p>`;
       }
