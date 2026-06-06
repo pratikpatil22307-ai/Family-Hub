@@ -1,5 +1,6 @@
 require('dotenv').config();
 
+
 const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
@@ -14,6 +15,7 @@ const messageRoutes = require('./routes/messages');
 const photoRoutes = require('./routes/photos');
 const familyRoutes = require('./routes/family');
 const dashboardRoutes = require('./routes/dashboard');
+const conversationRoutes = require('./routes/conversations');
 
 // Socket handler
 const socketHandler = require('./config/socket');
@@ -45,7 +47,7 @@ app.use('/api/messages', messageRoutes);
 app.use('/api/photos', photoRoutes);
 app.use('/api/family', familyRoutes);
 app.use('/api/dashboard', dashboardRoutes);
-
+app.use('/api/conversations', conversationRoutes);
 // Socket.IO
 socketHandler(io);
 

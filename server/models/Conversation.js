@@ -145,24 +145,23 @@ conversationSchema.statics.findOrCreate = async function ({
   userA,
   userB,
 }) {
-  const conversation = await this.findOneAndUpdate(
-    {
-      familyId,
-      participants: { $all: [userA, userB] },
-    },
-    {
-      $setOnInsert: {
-        familyId,
-        participants: [userA, userB],
-        lastMessageAt: new Date(),
-      },
-    },
-    {
-      upsert: true,
-      new: true,         // return the document after update/insert
-      setDefaultsOnInsert: true,
-    }
-  );
+  // First try to find existing conversation
+  let conversation = await this.findOne({
+    familyId,
+    participants: { $all: [userA, userB] },
+  });
+
+  if (conversation) {
+    return conversation;
+  }
+
+  // Create new conversation
+  conversation = await this.create({
+    familyId,
+    participants: [userA, userB],
+    lastMessageAt: new Date(),
+  });
+
   return conversation;
 };
 
