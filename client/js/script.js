@@ -1,242 +1,196 @@
-const calendarContainer = document.getElementById("calendarContainer");
+/* ============================================================
+   script.js  —  Family Hub Calendar
+   Uses FullCalendar v6 + api.getEvents() from MongoDB.
+   No localStorage, no custom month grid, no scroll effects.
+   ============================================================ */
 
-const STORAGE_KEY = "family_calendar_final_v2";
-
-let savedData = JSON.parse(localStorage.getItem(STORAGE_KEY)) || {
-  highlights: {},
-  notes: {},
-  flags: {}
+/* Category → CSS class for colour coding */
+const CAT_CLASS = {
+  'Vacation':      'fc-event-vacation',
+  'Birthday':      'fc-event-birthday',
+  'Anniversary':   'fc-event-anniversary',
+  'Trip':          'fc-event-trip',
+  'Get-together':  'fc-event-get-together',
+  'Other':         'fc-event-other',
 };
 
-const months = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December"
-];
+/* ── Helpers ──────────────────────────────────────────────── */
 
-const emojis = [
-  "❄️","❤️","🌸","🌦️","🌷","☀️",
-  "🏖️","🌻","🍂","🎃","🦃","🎄"
-];
-
-/* 🌄 images */
-const monthImages = [
-  "https://images.unsplash.com/photo-1483664852095-d6cc6870702d",
-  "https://images.unsplash.com/photo-1519681393784-d120267933ba",
-  "https://images.unsplash.com/photo-1520763185298-1b434c919102",
-  "https://images.unsplash.com/photo-1501004318641-b39e6451bec6",
-  "https://images.unsplash.com/photo-1500375592092-40eb2168fd21",
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-  "https://images.unsplash.com/photo-1507525428034-b723cf961d3e",
-  "https://images.unsplash.com/photo-1501785888041-af3ef285b470",
-  "https://images.unsplash.com/photo-1506744038136-46273834b3fb",
-  "https://images.unsplash.com/photo-1500530855697-b586d89ba3ee",
-  "https://images.unsplash.com/photo-1541542684-4a6f1c7a7c13",
-  "https://images.unsplash.com/photo-1512389142860-9c449e58a543"
-];
-
-function getDays(monthIndex) {
-  return new Date(2024, monthIndex + 1, 0).getDate();
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => (
+    { '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]
+  ));
 }
 
-function save() {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(savedData));
+function fmtDate(iso) {
+  if (!iso) return '';
+  return new Date(iso).toLocaleDateString('en-IN', {
+    day: 'numeric', month: 'short', year: 'numeric'
+  });
 }
 
-/* ------------------------
-   ACTIONS
--------------------------*/
-
-function toggleHighlight(month, day, cell) {
-  if (!savedData.highlights[month]) savedData.highlights[month] = {};
-
-  savedData.highlights[month][day] =
-    !savedData.highlights[month][day];
-
-  save();
+function fmtTime(iso) {
+  if (!iso) return '';
+  const d = new Date(iso);
+  // Only show time if it's not midnight (all-day events stored as T00:00:00)
+  if (d.getUTCHours() === 0 && d.getUTCMinutes() === 0) return '';
+  return d.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit' });
 }
 
-function setNote(month, day) {
-  const old = savedData.notes?.[month]?.[day] || "";
-  const text = prompt("Add note for this date:", old);
+/* ── Modal ────────────────────────────────────────────────── */
 
-  if (!savedData.notes[month]) savedData.notes[month] = {};
+function openModal(event) {
+  const ev = event.extendedProps || {};
 
-  if (text === null) return;
+  document.getElementById('modal-cat').textContent   = esc(ev.category || 'Event');
+  document.getElementById('modal-title').textContent = esc(event.title);
 
-  if (text.trim() === "") {
-    delete savedData.notes[month][day];
-  } else {
-    savedData.notes[month][day] = text;
-  }
+  const startStr = fmtDate(ev.startDate);
+  const endStr   = ev.endDate ? ' → ' + fmtDate(ev.endDate) : '';
+  const timeStr  = fmtTime(ev.startDate);
+  const locStr   = ev.location ? `📍 ${esc(ev.location)}` : '';
+  const byStr    = ev.createdByName ? `by ${esc(ev.createdByName)}` : '';
 
-  save();
-  render();
+  document.getElementById('modal-meta').innerHTML = [
+    startStr + endStr ? `<span>📅 ${esc(startStr + endStr)}</span>` : '',
+    timeStr  ? `<span>🕐 ${esc(timeStr)}</span>` : '',
+    locStr   ? `<span>${locStr}</span>` : '',
+    byStr    ? `<span style="opacity:0.7;font-size:0.8rem">${byStr}</span>` : '',
+  ].filter(Boolean).join('');
+
+  document.getElementById('modal-desc').textContent = ev.description || '';
+  document.getElementById('modal-desc').style.display = ev.description ? '' : 'none';
+
+  document.getElementById('event-modal').style.display = 'flex';
 }
 
-function toggleFlag(month, day) {
-  if (!savedData.flags[month]) savedData.flags[month] = {};
-
-  savedData.flags[month][day] =
-    !savedData.flags[month][day];
-
-  save();
-  render();
+function closeModal() {
+  document.getElementById('event-modal').style.display = 'none';
 }
 
-/* ------------------------
-   MONTH BUILDER
--------------------------*/
+// Close on overlay click
+document.getElementById('event-modal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
 
-function createMonth(month, index) {
-  const block = document.createElement("div");
-block.className = "month-block";
+// Close on Escape
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal();
+});
 
-block.style.background = getMonthTheme(index);
-  const img = document.createElement("img");
-  img.className = "month-image";
-  img.src = monthImages[index];
-  img.alt = month;
+/* ── Map MongoDB events → FullCalendar events ─────────────── */
 
-  const content = document.createElement("div");
-  content.className = "month-content";
-
-  const title = document.createElement("div");
-  title.className = "month-title";
-  title.innerHTML = `${emojis[index]} ${month}`;
-
-  const grid = document.createElement("div");
-  grid.className = "dates-grid";
-
-  const days = getDays(index);
-
-  if (!savedData.highlights[month]) savedData.highlights[month] = {};
-  if (!savedData.notes[month]) savedData.notes[month] = {};
-  if (!savedData.flags[month]) savedData.flags[month] = {};
-
-  for (let i = 1; i <= days; i++) {
-    const cell = document.createElement("div");
-    cell.className = "date-cell";
-
-    if (savedData.highlights[month][i]) {
-      cell.classList.add("selected");
+function mapToFC(events) {
+  return events.map(ev => {
+    // startDate from MongoDB is ISO string e.g. "2025-07-15T00:00:00.000Z"
+    const start = ev.startDate ? ev.startDate.substring(0, 10) : null;
+    // endDate: FullCalendar end is exclusive, so add 1 day for multi-day display
+    let end = null;
+    if (ev.endDate) {
+      const d = new Date(ev.endDate);
+      d.setDate(d.getDate() + 1);
+      end = d.toISOString().substring(0, 10);
     }
 
-    const num = document.createElement("div");
-    num.textContent = i;
-
-    const note = document.createElement("div");
-    note.className = "note";
-    note.textContent = savedData.notes[month][i] || "";
-
-    if (savedData.flags[month][i]) {
-      const flag = document.createElement("div");
-      flag.className = "flag";
-      flag.textContent = "⭐";
-      cell.appendChild(flag);
-    }
-
-    cell.appendChild(num);
-    cell.appendChild(note);
-
-    /* CLICK = highlight */
-    cell.addEventListener("click", (e) => {
-      e.stopPropagation();
-      toggleHighlight(month, i, cell);
-      cell.classList.toggle("selected");
-    });
-
-    /* DOUBLE CLICK = note */
-    cell.addEventListener("dblclick", (e) => {
-      e.stopPropagation();
-      setNote(month, i);
-    });
-
-    /* RIGHT CLICK = flag */
-    cell.addEventListener("contextmenu", (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      toggleFlag(month, i);
-    });
-
-    grid.appendChild(cell);
-  }
-
-  content.appendChild(title);
-  content.appendChild(grid);
-
-  block.appendChild(img);
-  block.appendChild(content);
-
-  return block;
-}
-
-/* ------------------------
-   RENDER
--------------------------*/
-
-function render() {
-  calendarContainer.innerHTML = "";
-
-  months.forEach((m, i) => {
-    const el = createMonth(m, i);
-    calendarContainer.appendChild(el);
-  });
-
-  setTimeout(initScrollEffects, 50);
-}
-
-/* ------------------------
-   SMOOTH SCROLL FX
--------------------------*/
-
-function initScrollEffects() {
-  const cards = document.querySelectorAll(".month-block");
-
-  const observer = new IntersectionObserver((entries) => {
-    entries.forEach(entry => {
-      if (entry.isIntersecting) {
-        entry.target.style.opacity = "1";
-        entry.target.style.transform = "translateY(0)";
-      }
-    });
-  }, {
-    threshold: 0.1
-  });
-
-  cards.forEach(card => {
-    card.style.opacity = "0";
-    card.style.transform = "translateY(20px)";
-    observer.observe(card);
+    return {
+      id:        ev._id,
+      title:     ev.title,
+      start,
+      end,
+      allDay:    true,
+      classNames: [CAT_CLASS[ev.category] || 'fc-event-other'],
+      extendedProps: {
+        description:   ev.description  || '',
+        category:      ev.category     || 'Other',
+        startDate:     ev.startDate,
+        endDate:       ev.endDate      || null,
+        location:      ev.location     || '',
+        createdByName: ev.createdByName || '',
+      },
+    };
   });
 }
 
-/* INIT */
-render();
-function getMonthTheme(index) {
-  // Winter: Dec, Jan, Feb
-  if ([11, 0, 1].includes(index)) {
-    return "linear-gradient(135deg, #89f7fe, #66a6ff)"; // cool blue winter
+/* ── Upcoming Events Panel ────────────────────────────────── */
+
+function renderUpcoming(events) {
+  const el = document.getElementById('upcoming-list');
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+
+  const upcoming = events
+    .filter(ev => ev.startDate && new Date(ev.startDate) >= today)
+    .sort((a, b) => new Date(a.startDate) - new Date(b.startDate))
+    .slice(0, 5);
+
+  if (!upcoming.length) {
+    el.innerHTML = '<div class="up-empty">No upcoming events 🎉</div>';
+    return;
   }
 
-  // Spring: Mar, Apr, May
-  if ([2, 3, 4].includes(index)) {
-    return "linear-gradient(135deg, #fbc2eb, #a6c1ee)"; // soft pink/purple spring
-  }
-
-  // Summer: Jun, Jul
-  if ([5, 6].includes(index)) {
-    return "linear-gradient(135deg, #fddb92, #ffb347)"; // warm yellow-orange
-  }
-
-  // Monsoon / Late Summer: Aug, Sep
-  if ([7, 8].includes(index)) {
-    return "linear-gradient(135deg, #89f7fe, #66a6ff)"; // fresh blue-green
-  }
-
-  // Autumn: Oct, Nov
-  if ([9, 10].includes(index)) {
-    return "linear-gradient(135deg, #ff9a9e, #fecfef)"; // warm pink-orange
-  }
-
-  return "linear-gradient(135deg, #ff6a88, #ff99ac)"; // fallback
+  el.innerHTML = upcoming.map(ev => {
+    const dateStr = fmtDate(ev.startDate);
+    const timeStr = fmtTime(ev.startDate);
+    return `
+      <div class="up-item">
+        <div class="up-item-name">${esc(ev.title)}</div>
+        <div class="up-item-meta">
+          <div>${esc(dateStr)}</div>
+          ${timeStr ? `<div class="up-item-time">${esc(timeStr)}</div>` : ''}
+        </div>
+      </div>`;
+  }).join('');
 }
+
+/* ── Init FullCalendar ────────────────────────────────────── */
+
+async function initCalendar() {
+  const calEl = document.getElementById('fc-calendar');
+
+  // Initialise with empty events; will populate after fetch
+  const calendar = new FullCalendar.Calendar(calEl, {
+    initialView: 'dayGridMonth',
+    headerToolbar: {
+      left:   'prev,next today',
+      center: 'title',
+      right:  'dayGridMonth,timeGridWeek,timeGridDay',
+    },
+    buttonText: {
+      today: 'Today',
+      month: 'Month',
+      week:  'Week',
+      day:   'Day',
+    },
+    height: 'auto',
+    fixedWeekCount: false,
+    showNonCurrentDates: true,
+    navLinks: false,
+    dayMaxEvents: 3,          // show "+N more" link for busy days
+    eventClick: function(info) {
+      info.jsEvent.preventDefault();
+      openModal(info.event);
+    },
+    // Disable built-in date click navigating to day view (keep it clean)
+    dateClick: null,
+    // Performance: don't re-render on every tiny resize
+    windowResizeDelay: 200,
+    events: [],               // populated below
+  });
+
+  calendar.render();
+
+  // Load events from MongoDB via existing api.getEvents()
+  try {
+    const events = await api.getEvents();
+    const fcEvents = mapToFC(events);
+    fcEvents.forEach(ev => calendar.addEvent(ev));
+    renderUpcoming(events);
+  } catch (err) {
+    console.error('Calendar: failed to load events', err);
+    document.getElementById('upcoming-list').innerHTML =
+      `<div class="up-empty" style="color:#ffaaaa">Failed to load events</div>`;
+  }
+}
+
+/* ── Bootstrap ────────────────────────────────────────────── */
+document.addEventListener('DOMContentLoaded', initCalendar);

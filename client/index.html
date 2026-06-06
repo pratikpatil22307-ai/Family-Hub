@@ -5,67 +5,117 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Family Hub — Calendar</title>
   <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <!-- FullCalendar v6 (CDN) -->
+  <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.css" rel="stylesheet" />
+  <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.11/index.global.min.js"></script>
+
   <link rel="stylesheet" href="css/style.css" />
   <link rel="stylesheet" href="css/mobile.css" />
-  <style>
-    .calendar-layout { display:flex; min-height:100vh; }
-    .cal-sidebar {
-      width:240px; flex-shrink:0;
-      background:rgba(255,255,255,0.12);
-      backdrop-filter:blur(12px);
-      border-right:1px solid rgba(255,255,255,0.2);
-      padding:20px 0;
-    }
-    .cal-main { flex:1; padding:20px; overflow-y:auto; }
-    .top-header { text-align:center; color:white; margin-bottom:20px; }
-    .top-header h1 { font-size:1.5rem; font-weight:800; }
-    .cal-nav-item {
-      display:flex; align-items:center; gap:10px;
-      padding:12px 20px; color:rgba(255,255,255,0.85);
-      text-decoration:none; font-weight:600;
-      transition:background 0.2s;
-      cursor:pointer;
-    }
-    .cal-nav-item:hover, .cal-nav-item.active {
-      background:rgba(255,255,255,0.15); color:#fff;
-    }
-    .cal-nav-section { padding:16px 20px 4px; font-size:0.75rem; color:rgba(255,255,255,0.5); font-weight:700; text-transform:uppercase; }
-    .cal-nav-divider { border:none; border-top:1px solid rgba(255,255,255,0.15); margin:8px 0; }
-    .logout-item { color:rgba(231,76,60,0.9) !important; }
-  </style>
 </head>
 <body>
-  <div class="calendar-layout">
-    <!-- Sidebar -->
-    <div class="cal-sidebar" id="cal-sidebar">
-      <div style="padding:20px;text-align:center;font-size:1.8rem">🏠</div>
-      <div class="cal-nav-section">Menu</div>
-      <a href="family-hub.html" class="cal-nav-item">🏡 Dashboard</a>
-      <a href="index.html" class="cal-nav-item active">📅 Calendar</a>
-      <a href="events.html" class="cal-nav-item">🎉 Events</a>
-      <a href="photos.html" class="cal-nav-item">🖼️ Photos</a>
-      <a href="chat.html" class="cal-nav-item">💬 Chat</a>
-      <hr class="cal-nav-divider" />
-      <div class="cal-nav-section">Account</div>
-      <div class="cal-nav-item" id="nav-user-name-cal"></div>
-      <div class="cal-nav-item logout-item" onclick="logout()" style="cursor:pointer">🚪 Logout</div>
-    </div>
 
-    <!-- Main calendar -->
-    <div class="cal-main">
-      <div class="top-header">
-        <h1>📅 Family Calendar 2024</h1>
-        <p style="opacity:0.8;font-size:0.9rem">Click a date to highlight · Double-click to add a note · Right-click to flag ⭐</p>
+  <!-- ── TOP HEADER ──────────────────────────────── -->
+  <header class="fh-header">
+    <span class="fh-header-title">🏠 Family Hub</span>
+    <span class="fh-header-right" id="nav-user-name"></span>
+  </header>
+
+  <div class="fh-layout">
+
+    <!-- ── SIDEBAR NAV ─────────────────────────────── -->
+    <nav class="fh-sidebar" id="sidebar"><!-- injected by nav.js if present --></nav>
+
+    <!-- ── MAIN AREA ───────────────────────────────── -->
+    <main class="fh-main">
+
+      <div class="page-header">
+        <h1 class="page-title">📅 Family Calendar</h1>
+        <p class="page-sub">All family events in one place</p>
       </div>
-      <div class="calendar-container" id="calendarContainer"></div>
+
+      <!-- Two-column layout: calendar + upcoming panel -->
+      <div class="cal-layout">
+
+        <!-- FullCalendar wrapper -->
+        <div class="cal-card glass">
+          <div id="fc-calendar"></div>
+        </div>
+
+        <!-- Upcoming Events panel -->
+        <aside class="upcoming-panel">
+          <div class="stat-box glass upcoming-card">
+            <div class="up-header">
+              <span class="up-icon">📌</span>
+              <span class="up-title">Upcoming Events</span>
+            </div>
+            <div id="upcoming-list">
+              <div class="up-loading">Loading…</div>
+            </div>
+            <a href="events.html" class="card-link">View all events →</a>
+          </div>
+        </aside>
+
+      </div><!-- /cal-layout -->
+
+    </main>
+  </div>
+
+  <!-- ── EVENT DETAIL MODAL ──────────────────────── -->
+  <div id="event-modal" class="modal-overlay" style="display:none" role="dialog" aria-modal="true" aria-labelledby="modal-title">
+    <div class="modal-card glass">
+      <button class="modal-close" onclick="closeModal()" aria-label="Close">✕</button>
+      <div class="modal-cat-badge" id="modal-cat"></div>
+      <h2 class="modal-title" id="modal-title"></h2>
+      <div class="modal-meta" id="modal-meta"></div>
+      <p class="modal-desc" id="modal-desc"></p>
+      <div class="modal-actions">
+        <a href="events.html" class="btn btn-ghost">Manage Events</a>
+      </div>
     </div>
   </div>
 
+  <!-- Scripts -->
   <script src="js/api.js"></script>
+  <!-- nav.js is optional; gracefully skipped if absent -->
   <script>
-    if (!requireAuth()) throw new Error();
-    const user = getUser();
-    document.getElementById('nav-user-name-cal').textContent = '👤 ' + user.name;
+    // Inline fallback nav in case nav.js isn't loaded
+    if (typeof buildNav === 'undefined') {
+      window.buildNav = function(active) {
+        const links = [
+          { href:'family-hub.html', icon:'🏡', label:'Dashboard', id:'dashboard' },
+          { href:'index.html',      icon:'📅', label:'Calendar',  id:'calendar'  },
+          { href:'events.html',     icon:'🎉', label:'Events',    id:'events'    },
+          { href:'photos.html',     icon:'🖼️', label:'Photos',    id:'photos'    },
+          { href:'chat.html',       icon:'💬', label:'Chat',      id:'chat'      },
+        ];
+        const sb = document.getElementById('sidebar');
+        if (!sb) return;
+        sb.innerHTML = `
+          <div style="padding:14px 10px 6px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Menu</div>
+          ${links.map(l=>`<a href="${l.href}" class="nav-item${l.id===active?' active':''}" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;text-decoration:none;color:var(--text-muted);font-weight:600;font-size:0.95rem;transition:background 0.15s,color 0.15s;">
+            <span style="width:20px;text-align:center">${l.icon}</span>${l.label}</a>`).join('')}
+          <hr style="border:none;border-top:1px solid var(--border);margin:10px 0"/>
+          <div style="padding:10px 12px;font-size:0.7rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-muted)">Account</div>
+          <div id="nav-user-name-sb" class="nav-item" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:var(--text-muted);font-weight:600;font-size:0.95rem;"></div>
+          <div class="nav-item" onclick="logout()" style="display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:8px;color:rgba(231,76,60,0.9);font-weight:600;font-size:0.95rem;cursor:pointer;">🚪 Logout</div>
+        `;
+        const user = getUser();
+        if (user) {
+          const el = document.getElementById('nav-user-name-sb');
+          if (el) el.textContent = '👤 ' + user.name;
+        }
+      };
+    }
+  </script>
+  <script>
+    if (!requireAuth()) throw new Error('Not authenticated');
+    const _user = getUser();
+    if (_user) {
+      const el = document.getElementById('nav-user-name');
+      if (el) el.textContent = '👤 ' + _user.name;
+    }
+    if (typeof buildNav === 'function') buildNav('calendar');
   </script>
   <script src="js/script.js"></script>
 </body>

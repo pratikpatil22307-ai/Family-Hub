@@ -4,62 +4,197 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Family Hub — Events</title>
-  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="css/events.css" />
   <link rel="stylesheet" href="css/mobile.css" />
   <link rel="stylesheet" href="css/search.css" />
 </head>
 <body>
-  <div class="container">
-    <div class="sidebar" id="sidebar"><!-- injected --></div>
-    <div class="events-layout">
-      <section class="create-card glass">
-        <h1>🎉 New event</h1>
-        <p class="muted">Propose a plan for the family.</p>
-        <div id="form-error" class="form-error" style="display:none"></div>
-        <form id="event-form">
-          <input type="hidden" id="edit-id" />
-          <div class="field"><label>Title</label><input name="title" required placeholder="Summer beach trip" /></div>
-          <div class="field"><label>Description</label><textarea name="description" rows="3" placeholder="Details, ideas…"></textarea></div>
-          <div class="row">
-            <div class="field"><label>Category</label>
-              <select name="category" id="category" required>
-                <option>Vacation</option><option>Birthday</option><option>Anniversary</option>
-                <option>Trip</option><option>Get-together</option><option>Other</option>
-              </select>
-            </div>
-            <div class="field" id="sub-wrap" style="display:none"><label>Trip type</label>
-              <select name="subCategory" id="subCategory">
-                <option value="">—</option><option>Hotel</option><option>Resort</option><option>Restaurant</option>
-              </select>
-            </div>
-          </div>
-          <div class="row">
-            <div class="field"><label>Start date</label><input type="date" name="startDate" required /></div>
-            <div class="field"><label>End date (optional)</label><input type="date" name="endDate" /></div>
-          </div>
-          <div class="field"><label>Location (optional)</label><input name="location" placeholder="Where?" /></div>
-          <div style="display:flex;gap:10px">
-            <button class="btn btn-primary" type="submit" id="submit-btn">＋ Create event</button>
-            <button class="btn" type="button" id="cancel-edit-btn" style="display:none;background:#dfe6e9" onclick="cancelEdit()">✕ Cancel</button>
-          </div>
-        </form>
-      </section>
 
-      <section class="list-card glass">
-        <h1>📋 Family events</h1>
-        <div class="filters">
-          <input id="search" placeholder="🔎 Search title or description" />
-          <select id="filter-cat">
-            <option value="">All categories</option>
-            <option>Vacation</option><option>Birthday</option><option>Anniversary</option>
-            <option>Trip</option><option>Get-together</option><option>Other</option>
-          </select>
-        </div>
-        <div id="event-list" class="event-list"><p style="color:#aaa">Loading events…</p></div>
-      </section>
+  <!-- ── Top Header (mirrors family-hub.html) ────────────── -->
+  <header class="fh-header">
+    <span class="fh-header-title">🏠 Family Hub</span>
+    <div class="fh-header-right">
+      <span class="status-dot"></span>
+      <span id="nav-user-name" class="header-user"></span>
     </div>
-  </div>
+  </header>
+
+  <div class="fh-layout">
+
+    <!-- ── Sidebar Nav ──────────────────────────────────── -->
+   <nav class="fh-sidebar sidebar" id="sidebar"></nav>
+
+    <!-- ── Main Content ─────────────────────────────────── -->
+    <main class="fh-main">
+
+      <!-- Page header -->
+      <div class="page-header">
+        <h1 class="page-title">🎉 Family Events</h1>
+        <p class="page-sub">Plan and celebrate together</p>
+      </div>
+
+      <!-- Two-column layout -->
+      <div class="events-layout">
+
+        <!-- ── CREATE / EDIT FORM ─────────────────────── -->
+        <section class="form-panel glass" aria-label="Create Event">
+
+          <div class="panel-heading">
+            <span class="panel-icon">✨</span>
+            <div>
+              <h2 class="panel-title">New Event</h2>
+              <p class="panel-sub">Propose a plan for the family</p>
+            </div>
+          </div>
+
+          <div id="form-error" class="form-error" style="display:none"></div>
+
+          <form id="event-form" autocomplete="off">
+            <input type="hidden" id="edit-id" />
+
+            <div class="form-section">
+              <div class="field">
+                <label class="field-label">
+                  <span class="field-icon">📝</span> Title
+                </label>
+                <input
+                  name="title"
+                  required
+                  placeholder="Summer beach trip…"
+                  class="field-input"
+                />
+              </div>
+
+              <div class="field">
+                <label class="field-label">
+                  <span class="field-icon">💬</span> Description
+                </label>
+                <textarea
+                  name="description"
+                  rows="3"
+                  placeholder="Details, ideas, what to bring…"
+                  class="field-input"
+                ></textarea>
+              </div>
+            </div>
+
+            <div class="form-divider"></div>
+
+            <div class="form-section">
+              <div class="field-row">
+                <div class="field">
+                  <label class="field-label">
+                    <span class="field-icon">🏷️</span> Category
+                  </label>
+                  <select name="category" id="category" required class="field-input">
+                    <option>Vacation</option>
+                    <option>Birthday</option>
+                    <option>Anniversary</option>
+                    <option>Trip</option>
+                    <option>Get-together</option>
+                    <option>Other</option>
+                  </select>
+                </div>
+                <div class="field" id="sub-wrap" style="display:none">
+                  <label class="field-label">
+                    <span class="field-icon">🏨</span> Trip Type
+                  </label>
+                  <select name="subCategory" id="subCategory" class="field-input">
+                    <option value="">— Select —</option>
+                    <option>Hotel</option>
+                    <option>Resort</option>
+                    <option>Restaurant</option>
+                  </select>
+                </div>
+              </div>
+
+              <div class="field-row">
+                <div class="field">
+                  <label class="field-label">
+                    <span class="field-icon">📅</span> Start Date
+                  </label>
+                  <input type="date" name="startDate" required class="field-input" />
+                </div>
+                <div class="field">
+                  <label class="field-label">
+                    <span class="field-icon">📅</span> End Date
+                    <span class="field-optional">optional</span>
+                  </label>
+                  <input type="date" name="endDate" class="field-input" />
+                </div>
+              </div>
+
+              <div class="field">
+                <label class="field-label">
+                  <span class="field-icon">📍</span> Location
+                  <span class="field-optional">optional</span>
+                </label>
+                <input name="location" placeholder="Where is it happening?" class="field-input" />
+              </div>
+            </div>
+
+            <div class="form-actions">
+              <button class="btn btn-primary" type="submit" id="submit-btn">
+                <span class="btn-icon">＋</span> Create Event
+              </button>
+              <button
+                class="btn btn-cancel"
+                type="button"
+                id="cancel-edit-btn"
+                style="display:none"
+                onclick="cancelEdit()"
+              >
+                ✕ Cancel
+              </button>
+            </div>
+          </form>
+        </section>
+
+        <!-- ── EVENT LIST ──────────────────────────────── -->
+        <section class="list-panel" aria-label="Family Events">
+
+          <!-- Search & Filter bar -->
+          <div class="filter-bar glass">
+            <div class="search-wrap">
+              <span class="search-icon">🔎</span>
+              <input
+                id="search"
+                class="search-input"
+                placeholder="Search events…"
+                autocomplete="off"
+              />
+            </div>
+            <select id="filter-cat" class="filter-select">
+              <option value="">All categories</option>
+              <option>Vacation</option>
+              <option>Birthday</option>
+              <option>Anniversary</option>
+              <option>Trip</option>
+              <option>Get-together</option>
+              <option>Other</option>
+            </select>
+          </div>
+
+          <!-- List heading -->
+          <div class="list-heading">
+            <h2 class="list-title">📋 Family Events</h2>
+            <span id="event-count" class="event-count-badge"></span>
+          </div>
+
+          <!-- Event cards -->
+          <div id="event-list" class="event-list">
+            <div class="loading-state">
+              <div class="loading-spinner"></div>
+              <p>Loading events…</p>
+            </div>
+          </div>
+
+        </section>
+
+      </div><!-- /events-layout -->
+    </main>
+  </div><!-- /fh-layout -->
 
   <script src="js/api.js"></script>
   <script src="js/nav.js"></script>
@@ -68,129 +203,173 @@
     if (!requireAuth()) throw new Error();
     buildNav('events');
 
-    const form = document.getElementById('event-form');
-    const listEl = document.getElementById('event-list');
-    const searchEl = document.getElementById('search');
+    const form      = document.getElementById('event-form');
+    const listEl    = document.getElementById('event-list');
+    const searchEl  = document.getElementById('search');
     const filterCat = document.getElementById('filter-cat');
-    const formErr = document.getElementById('form-error');
+    const formErr   = document.getElementById('form-error');
     let events = [];
     let debounceTimer;
 
-    // Category → show subCategory
-    document.getElementById('category').addEventListener('change', function() {
-      document.getElementById('sub-wrap').style.display = this.value === 'Trip' ? 'block' : 'none';
+    /* ── Category → subCategory toggle ── */
+    document.getElementById('category').addEventListener('change', function () {
+      document.getElementById('sub-wrap').style.display =
+        this.value === 'Trip' ? 'flex' : 'none';
     });
 
+    /* ── Load events from API ── */
     async function loadEvents() {
       const params = {};
-      if (searchEl.value.trim()) params.search = searchEl.value.trim();
-      if (filterCat.value) params.category = filterCat.value;
+      if (searchEl.value.trim())  params.search   = searchEl.value.trim();
+      if (filterCat.value)        params.category = filterCat.value;
       try {
         events = await api.getEvents(params);
         renderEvents();
       } catch (err) {
-        listEl.innerHTML = `<p style="color:#e74c3c">Failed to load events: ${err.message}</p>`;
+        listEl.innerHTML = `
+          <div class="error-state">
+            <span class="error-icon">⚠️</span>
+            <p>Failed to load events: ${err.message}</p>
+          </div>`;
       }
     }
 
+    /* ── Render event cards ── */
     function renderEvents() {
+      const countBadge = document.getElementById('event-count');
+
       if (!events.length) {
-        listEl.innerHTML = '<p style="color:#aaa;padding:20px 0">No events found. Create one!</p>';
+        countBadge.textContent = '';
+        listEl.innerHTML = `
+          <div class="empty-state">
+            <div class="empty-emoji">🎉</div>
+            <h3 class="empty-title">No events yet</h3>
+            <p class="empty-sub">Create your first family event using the form — it only takes a moment!</p>
+          </div>`;
         return;
       }
-      listEl.innerHTML = events.map(ev => `
-        <div class="event-card" data-id="${ev._id}">
-          <div class="event-header">
-            <div>
-              <span class="event-cat-badge">${esc(ev.category)}</span>
-              <strong>${esc(ev.title)}</strong>
+
+      countBadge.textContent = events.length;
+
+      listEl.innerHTML = events.map((ev, i) => `
+        <div class="event-card" data-id="${ev._id}" style="animation-delay:${i * 45}ms">
+          <div class="event-card-top">
+            <div class="event-card-left">
+              <span class="cat-badge cat-${slugify(ev.category)}">${esc(ev.category)}</span>
+              <h3 class="event-title">${esc(ev.title)}</h3>
             </div>
             <div class="event-actions">
-              <button onclick="editEvent('${ev._id}')" title="Edit">✏️</button>
-              <button onclick="deleteEvent('${ev._id}')" title="Delete">🗑️</button>
+              <button class="action-btn edit-btn"  onclick="editEvent('${ev._id}')"   title="Edit event"   aria-label="Edit">✏️</button>
+              <button class="action-btn delete-btn" onclick="deleteEvent('${ev._id}')" title="Delete event" aria-label="Delete">🗑️</button>
             </div>
           </div>
+
           ${ev.description ? `<p class="event-desc">${esc(ev.description)}</p>` : ''}
-          <div class="event-meta">
-            <span>📅 ${fmtDate(ev.startDate)}${ev.endDate ? ' → ' + fmtDate(ev.endDate) : ''}</span>
-            ${ev.location ? `<span>📍 ${esc(ev.location)}</span>` : ''}
-            <span style="color:#aaa;font-size:0.8rem">by ${esc(ev.createdByName || 'Family')}</span>
+
+          <div class="event-meta-row">
+            <span class="meta-chip">
+              <span class="meta-chip-icon">📅</span>
+              ${fmtDate(ev.startDate)}${ev.endDate ? ' → ' + fmtDate(ev.endDate) : ''}
+            </span>
+            ${ev.location ? `<span class="meta-chip"><span class="meta-chip-icon">📍</span>${esc(ev.location)}</span>` : ''}
+            <span class="meta-chip meta-chip-by">
+              <span class="meta-chip-icon">👤</span>${esc(ev.createdByName || 'Family')}
+            </span>
           </div>
         </div>`).join('');
     }
 
-    // Create / update
+    /* ── Create / Update ── */
     form.addEventListener('submit', async (e) => {
       e.preventDefault();
       formErr.style.display = 'none';
-      const btn = document.getElementById('submit-btn');
-      btn.disabled = true;
-
-      const fd = new FormData(form);
-      const payload = Object.fromEntries(fd.entries());
+      const btn    = document.getElementById('submit-btn');
       const editId = document.getElementById('edit-id').value;
+      btn.disabled = true;
+      btn.textContent = editId ? '💾 Saving…' : '⏳ Creating…';
+
+      const fd      = new FormData(form);
+      const payload = Object.fromEntries(fd.entries());
 
       try {
         if (editId) {
           await api.updateEvent(editId, payload);
-          showToast('Event updated!');
+          showToast('Event updated! ✅');
           cancelEdit();
         } else {
           await api.createEvent(payload);
-          showToast('Event created!');
+          showToast('Event created! 🎉');
           form.reset();
         }
         await loadEvents();
       } catch (err) {
-        formErr.textContent = err.message;
-        formErr.style.display = 'block';
+        formErr.textContent    = err.message;
+        formErr.style.display  = 'block';
       } finally {
-        btn.disabled = false;
+        btn.disabled    = false;
+        btn.innerHTML   = editId
+          ? '<span class="btn-icon">💾</span> Update Event'
+          : '<span class="btn-icon">＋</span> Create Event';
       }
     });
 
+    /* ── Edit ── */
     function editEvent(id) {
       const ev = events.find(e => e._id === id);
       if (!ev) return;
-      document.getElementById('edit-id').value = ev._id;
-      form.querySelector('[name=title]').value = ev.title;
-      form.querySelector('[name=description]').value = ev.description || '';
-      form.querySelector('[name=category]').value = ev.category;
-      form.querySelector('[name=startDate]').value = ev.startDate?.substring(0, 10) || '';
-      form.querySelector('[name=endDate]').value = ev.endDate?.substring(0, 10) || '';
-      form.querySelector('[name=location]').value = ev.location || '';
-      document.getElementById('submit-btn').textContent = '💾 Update event';
-      document.getElementById('cancel-edit-btn').style.display = 'inline-block';
-      form.scrollIntoView({ behavior: 'smooth' });
+      document.getElementById('edit-id').value                = ev._id;
+      form.querySelector('[name=title]').value                 = ev.title;
+      form.querySelector('[name=description]').value           = ev.description || '';
+      form.querySelector('[name=category]').value              = ev.category;
+      form.querySelector('[name=startDate]').value             = ev.startDate?.substring(0, 10) || '';
+      form.querySelector('[name=endDate]').value               = ev.endDate?.substring(0, 10)   || '';
+      form.querySelector('[name=location]').value              = ev.location || '';
+      document.getElementById('submit-btn').innerHTML         = '<span class="btn-icon">💾</span> Update Event';
+      document.getElementById('cancel-edit-btn').style.display = 'inline-flex';
+      // Scroll form into view on mobile
+      document.querySelector('.form-panel').scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
 
     function cancelEdit() {
-      document.getElementById('edit-id').value = '';
+      document.getElementById('edit-id').value                = '';
       form.reset();
-      document.getElementById('submit-btn').textContent = '＋ Create event';
+      document.getElementById('submit-btn').innerHTML         = '<span class="btn-icon">＋</span> Create Event';
       document.getElementById('cancel-edit-btn').style.display = 'none';
+      formErr.style.display = 'none';
     }
 
+    /* ── Delete ── */
     async function deleteEvent(id) {
-      if (!confirm('Delete this event?')) return;
+      if (!confirm('Delete this event? This cannot be undone.')) return;
       try {
         await api.deleteEvent(id);
-        showToast('Event deleted');
+        showToast('Event deleted 🗑️');
         await loadEvents();
       } catch (err) {
         showToast('Failed to delete: ' + err.message);
       }
     }
 
-    // Search & filter with debounce
+    /* ── Search & filter with debounce ── */
     searchEl.addEventListener('input', () => {
       clearTimeout(debounceTimer);
       debounceTimer = setTimeout(loadEvents, 300);
     });
     filterCat.addEventListener('change', loadEvents);
 
-    function esc(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-    function fmtDate(iso) { return iso ? new Date(iso).toLocaleDateString('en-IN', {day:'numeric',month:'short',year:'numeric'}) : ''; }
+    /* ── Helpers ── */
+    function esc(s) {
+      return String(s ?? '').replace(/[&<>"']/g,
+        c => ({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[c]));
+    }
+    function fmtDate(iso) {
+      return iso
+        ? new Date(iso).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
+        : '';
+    }
+    function slugify(s) {
+      return String(s ?? '').toLowerCase().replace(/\s+/g, '-').replace(/[^a-z0-9-]/g, '');
+    }
 
     loadEvents();
   </script>
