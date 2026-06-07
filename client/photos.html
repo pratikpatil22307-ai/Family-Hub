@@ -4,34 +4,234 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Photos — Family Hub</title>
-
-  <!--
-    FONT: Both DM Serif Display (display headings) and Nunito (body)
-    loaded so photos page matches the dashboard's type palette exactly.
-  -->
   <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=Nunito:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
-
-  <!-- Core stylesheet — matches family-hub.css design system -->
   <link rel="stylesheet" href="css/photos.css" />
-
-  <!-- Mobile nav utility (hamburger etc.) — unchanged -->
   <link rel="stylesheet" href="css/mobile.css" />
+
+  <!-- ── ADDED: Album panel + modal styles (scoped, no conflict with photos.css) ── -->
+  <style>
+    /* ── Layout: album panel + photo grid side by side ── */
+    .photos-layout {
+      display: flex;
+      gap: 24px;
+      align-items: flex-start;
+    }
+
+    /* ── Album sidebar panel ── */
+    .album-panel {
+      width: 220px;
+      flex-shrink: 0;
+      background: var(--card-bg, #fff);
+      border-radius: 16px;
+      padding: 16px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    .album-panel-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 12px;
+    }
+
+    .album-panel-title {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1rem;
+      color: var(--text-primary, #1a1a2e);
+      margin: 0;
+    }
+
+    .btn-new-album {
+      background: var(--accent, #ff6b9d);
+      color: #fff;
+      border: none;
+      border-radius: 8px;
+      padding: 4px 10px;
+      font-size: 0.78rem;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-new-album:hover { opacity: 0.85; }
+
+    .album-list { list-style: none; margin: 0; padding: 0; }
+
+    .album-list li {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      padding: 8px 10px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.88rem;
+      color: var(--text-secondary, #555);
+      transition: background 0.15s, color 0.15s;
+      user-select: none;
+    }
+    .album-list li:hover { background: var(--bg-hover, #ffeef5); }
+    .album-list li.active {
+      background: var(--accent, #ff6b9d);
+      color: #fff;
+      font-weight: 700;
+    }
+    .album-list li.active .album-delete-btn { color: rgba(255,255,255,0.8); }
+
+    .album-name-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+    .album-delete-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.85rem;
+      color: var(--text-muted, #aaa);
+      padding: 0 2px;
+      line-height: 1;
+      border-radius: 4px;
+      transition: color 0.15s;
+      flex-shrink: 0;
+    }
+    .album-delete-btn:hover { color: #e53e3e; }
+
+    /* ── Photo grid grows to fill remaining space ── */
+    .photos-content { flex: 1; min-width: 0; }
+
+    /* ── Upload zone album selector ── */
+   .upload-album-select {
+  margin-top: 8px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  border: 1.5px solid var(--border, #e8d5f0);
+  font-family: 'Nunito', sans-serif;
+  font-size: 0.88rem;
+  color: #1a1a2e !important;           /* force dark text regardless of inherited styles */
+  background: #ffffff !important;      /* force white background */
+  cursor: pointer;
+  max-width: 280px;
+  -webkit-text-fill-color: #1a1a2e;   /* Safari/Chrome override for autofill & inherited colour */
+}
+.upload-album-select:focus { outline: none; border-color: var(--accent, #ff6b9d); }
+.upload-album-select option {
+  color: #1a1a2e;                      /* ensure options are also dark text */
+  background: #ffffff;
+}
+
+    /* ── Create Album modal ── */
+    .modal-backdrop {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.45);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .modal-backdrop.open { display: flex; }
+
+    .modal-card {
+      background: #fff;
+      border-radius: 20px;
+      padding: 28px 32px;
+      width: 100%;
+      max-width: 400px;
+      box-shadow: 0 8px 40px rgba(0,0,0,0.18);
+      font-family: 'Nunito', sans-serif;
+    }
+    .modal-card h2 {
+      font-family: 'DM Serif Display', serif;
+      font-size: 1.4rem;
+      margin: 0 0 20px;
+      color: var(--text-primary, #1a1a2e);
+    }
+    .modal-field { margin-bottom: 14px; }
+    .modal-field label {
+      display: block;
+      font-size: 0.82rem;
+      font-weight: 700;
+      color: var(--text-secondary, #555);
+      margin-bottom: 5px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .modal-field input,
+    .modal-field textarea {
+      width: 100%;
+      box-sizing: border-box;
+      padding: 9px 13px;
+      border-radius: 10px;
+      border: 1.5px solid var(--border, #e8d5f0);
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.95rem;
+      color: var(--text-primary, #1a1a2e);
+      resize: vertical;
+    }
+    .modal-field input:focus,
+    .modal-field textarea:focus {
+      outline: none;
+      border-color: var(--accent, #ff6b9d);
+    }
+    .modal-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; }
+    .btn-cancel {
+      background: var(--bg-hover, #f5f5f5);
+      border: none;
+      border-radius: 10px;
+      padding: 9px 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      color: var(--text-secondary, #555);
+    }
+    .btn-create-album {
+      background: var(--accent, #ff6b9d);
+      color: #fff;
+      border: none;
+      border-radius: 10px;
+      padding: 9px 20px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      cursor: pointer;
+      transition: opacity 0.15s;
+    }
+    .btn-create-album:hover { opacity: 0.85; }
+    .btn-create-album:disabled { opacity: 0.6; cursor: not-allowed; }
+
+    /* ── Active album banner above grid ── */
+    .album-banner {
+      display: none;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent-soft, #fff0f6);
+      border-radius: 12px;
+      padding: 10px 16px;
+      margin-bottom: 16px;
+      font-family: 'Nunito', sans-serif;
+      font-size: 0.92rem;
+      color: var(--text-primary, #1a1a2e);
+      font-weight: 600;
+    }
+    .album-banner.visible { display: flex; }
+    .album-banner-name { font-family: 'DM Serif Display', serif; font-size: 1.05rem; }
+    .album-banner-clear {
+      margin-left: auto;
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 0.82rem;
+      color: var(--accent, #ff6b9d);
+      font-weight: 700;
+      font-family: 'Nunito', sans-serif;
+    }
+
+    @media (max-width: 700px) {
+      .photos-layout { flex-direction: column; }
+      .album-panel { width: 100%; }
+    }
+  </style>
 </head>
 <body>
 
-  <!--
-    TOP-LEVEL SHELL
-    ───────────────
-    .app-wrapper = flex row (sidebar | main-content)
-    Matches the .layout pattern from family-hub.html.
-
-    CHANGE FROM ORIGINAL: Added <header> above the flex shell so the
-    page has the same sticky pink header as the dashboard.
-    SAFE BECAUSE: <header> is new markup; no existing JS references it.
-    nav.js injects into <aside class="sidebar"> as before.
-  -->
-
-  <!-- ── HEADER (new, matches family-hub.html exactly) ─── -->
   <header>
     <span class="header-title">🏠 Family Hub</span>
     <div class="header-status">
@@ -41,36 +241,15 @@
   </header>
 
   <div class="app-wrapper">
+    <aside class="sidebar" id="sidebar"></aside>
 
-    <!-- ── SIDEBAR ── -->
-    <!--
-      id not used by JS. nav.js targets <aside class="sidebar"> or
-      <nav class="sidebar"> — both are valid; using <aside> as original.
-    -->
-    <aside class="sidebar" id="sidebar"><!-- injected by nav.js --></aside>
-
-    <!-- ── MAIN CONTENT ── -->
     <main class="main-content">
-
-      <!-- Page heading -->
-      <!--
-        CHANGE FROM ORIGINAL: Wrapped existing <h1> and <p> in a
-        .page-header <div> matching family-hub.html structure.
-        SAFE BECAUSE: No JS references this wrapper div.
-      -->
       <div class="page-header">
         <h1>📸 Family Photos</h1>
         <p>Your family's shared memories</p>
       </div>
 
-      <!-- ── UPLOAD ZONE ─────────────────────────────────────────
-           id="upload-zone"        → JS: zone variable, drag/drop listeners
-           id="file-input"         → JS: fileInput variable, change listener
-           id="upload-title"       → JS: reads .value in uploadFiles()
-           id="upload-btn"         → JS: uploadBtn variable, display toggle
-           onclick="uploadFiles(event)" → JS function, preserved exactly
-           All attributes, ids, and event handlers are 100% preserved.
-      ──────────────────────────────────────────────────────────── -->
+      <!-- ── UPLOAD ZONE — identical to original except album selector added ── -->
       <div class="upload-zone" id="upload-zone"
            onclick="document.getElementById('file-input').click()">
 
@@ -80,14 +259,6 @@
         <strong>Click or drag photos here to upload</strong>
         <p>JPG, PNG, GIF, WebP — up to 10 MB each</p>
 
-        <!--
-          CHANGE FROM ORIGINAL: onclick on these inputs had a bug in
-          original ("onclick="e => e.stopPropagation()"" — arrow fn as
-          string doesn't work). Changed to correct inline syntax.
-          SAFE BECAUSE: The original stopPropagation was broken/no-op;
-          fixing it to work correctly is safe and improves UX (clicking
-          the text input won't trigger the file dialog).
-        -->
         <input
           type="text"
           class="upload-title-input"
@@ -95,6 +266,16 @@
           placeholder="Photo title (optional)"
           onclick="event.stopPropagation()"
         />
+
+        <!-- ── ADDED: album selector in upload zone ── -->
+        <select
+          class="upload-album-select"
+          id="upload-album"
+          onclick="event.stopPropagation()"
+        >
+          <option value="">— No album (All Photos) —</option>
+          <!-- populated by renderAlbumSelect() -->
+        </select>
 
         <button
           class="upload-btn"
@@ -106,105 +287,112 @@
         </button>
       </div>
 
-      <!-- Progress indicator — id="upload-progress", toggled by JS -->
       <div id="upload-progress" style="display:none"></div>
 
-      <!-- ── PHOTO GRID ──────────────────────────────────────────
-           id="photo-grid" populated entirely by loadPhotos() in JS.
-           JS renders .photo-item divs with:
-             onclick="openLightbox(...)"   → lightbox
-             .delete-photo-btn             → deletePhoto(event, id)
-           The .photo-grid-full class is the CSS grid wrapper.
-           CHANGE: renamed container class from .photo-grid-full to
-           keep same class but give it the correct CSS.
-           id="photo-grid" preserved — required by JS.
-      ──────────────────────────────────────────────────────────── -->
-      <div class="photo-grid-full" id="photo-grid">
-        <!-- Rendered by loadPhotos() -->
-        <p style="color:var(--text-muted);grid-column:1/-1;padding:24px 0">
-          Loading photos…
-        </p>
-      </div>
+      <!-- ── ADDED: Two-column layout — album panel | photo grid ── -->
+      <div class="photos-layout">
+
+        <!-- Album panel -->
+        <aside class="album-panel">
+          <div class="album-panel-header">
+            <h2 class="album-panel-title">Albums</h2>
+            <button class="btn-new-album" onclick="openCreateAlbumModal()">+ New</button>
+          </div>
+          <ul class="album-list" id="album-list">
+            <li class="active" data-id="" onclick="selectAlbum('', 'All Photos', this)">
+              <span class="album-name-text">🖼 All Photos</span>
+            </li>
+            <!-- populated by loadAlbums() -->
+          </ul>
+        </aside>
+
+        <!-- Photo grid (right side) -->
+        <div class="photos-content">
+          <!-- ADDED: active album banner -->
+          <div class="album-banner" id="album-banner">
+            <span>Viewing album:</span>
+            <span class="album-banner-name" id="album-banner-name"></span>
+            <button class="album-banner-clear" onclick="selectAlbum('', 'All Photos', document.querySelector('.album-list li'))">
+              ✕ Show all
+            </button>
+          </div>
+
+          <!-- id="photo-grid" preserved exactly — JS still targets this -->
+          <div class="photo-grid-full" id="photo-grid">
+            <p style="color:var(--text-muted);grid-column:1/-1;padding:24px 0">
+              Loading photos…
+            </p>
+          </div>
+        </div>
+
+      </div><!-- /.photos-layout -->
 
     </main>
   </div><!-- /.app-wrapper -->
 
-
-  <!-- ── LIGHTBOX ───────────────────────────────────────────────
-       id="lightbox"         → JS: classList.add('open') / .remove('open')
-       id="lightbox-img"     → JS: .src = url
-       id="lightbox-caption" → JS: .textContent = caption
-       .lightbox-close       → onclick="closeLightbox()"
-       onclick="closeLightbox()" on the outer lightbox div preserved.
-       SAFE BECAUSE: All ids and the .open toggle class are identical.
-  ──────────────────────────────────────────────────────────── -->
+  <!-- ── LIGHTBOX — 100% unchanged ── -->
   <div class="lightbox" id="lightbox" onclick="closeLightbox()">
     <span class="lightbox-close" role="button" aria-label="Close lightbox">✕</span>
-    <!--
-      stopPropagation on img click so clicking the photo itself
-      doesn't immediately close the lightbox.
-      SAFE: JS only closes on the outer div onclick; this is additive.
-    -->
-    <img id="lightbox-img" src="" alt=""
-         onclick="event.stopPropagation()" />
+    <img id="lightbox-img" src="" alt="" onclick="event.stopPropagation()" />
     <div id="lightbox-caption"></div>
   </div>
 
+  <!-- ── ADDED: Create Album modal ── -->
+  <div class="modal-backdrop" id="create-album-modal" onclick="handleModalBackdropClick(event)">
+    <div class="modal-card" onclick="event.stopPropagation()">
+      <h2>📁 Create Album</h2>
+      <div class="modal-field">
+        <label for="album-name-input">Album Name *</label>
+        <input type="text" id="album-name-input" placeholder="e.g. Summer 2025" maxlength="80" />
+      </div>
+      <div class="modal-field">
+        <label for="album-desc-input">Description (optional)</label>
+        <textarea id="album-desc-input" rows="3" placeholder="A short description…" maxlength="300"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-cancel" onclick="closeCreateAlbumModal()">Cancel</button>
+        <button class="btn-create-album" id="btn-do-create" onclick="createAlbum()">Create</button>
+      </div>
+    </div>
+  </div>
 
-  <!-- ── SCRIPTS ─────────────────────────────────────────────── -->
-  <!--
-    Script order matches original exactly:
-      1. api.js        — defines api, requireAuth, getUser, showToast
-      2. nav.js        — defines buildNav(), injects sidebar HTML
-      3. mobile-nav.js — hamburger behaviour (deferred)
-      4. Inline script — page logic (calls api, nav, renders grid)
-
-    No scripts modified, removed, or reordered.
-  -->
+  <!-- ── SCRIPTS — same load order as original ── -->
   <script src="js/api.js"></script>
   <script src="js/nav.js"></script>
   <script src="js/mobile-nav.js" defer></script>
 
   <script>
-    /*
-      ─────────────────────────────────────────────────────────────
-      ALL BUSINESS LOGIC BELOW IS 100% IDENTICAL TO THE ORIGINAL.
-      No functions renamed. No API calls changed. No data flow
-      altered. Only the photo card HTML template has cosmetic
-      tweaks (class names for CSS styling) — functional attrs
-      (onclick, id, src, alt) are untouched.
-      ─────────────────────────────────────────────────────────────
-    */
-
     if (!requireAuth()) throw new Error();
     buildNav('photos');
 
-    let selectedFiles = [];
+    /* ─────────────────────────────────────────────────────────
+       STATE
+    ───────────────────────────────────────────────────────── */
+    let selectedFiles  = [];
+    let currentAlbumId = '';          // ADDED: '' = All Photos
+    let albums         = [];          // ADDED: cached album list
+
     const fileInput = document.getElementById('file-input');
     const uploadBtn = document.getElementById('upload-btn');
     const zone      = document.getElementById('upload-zone');
 
-    /* ── Drag & Drop ── */
+    /* ─────────────────────────────────────────────────────────
+       DRAG & DROP — UNCHANGED
+    ───────────────────────────────────────────────────────── */
     zone.addEventListener('dragover', (e) => {
       e.preventDefault();
       zone.classList.add('drag-over');
     });
-
-    zone.addEventListener('dragleave', () => {
-      zone.classList.remove('drag-over');
-    });
-
+    zone.addEventListener('dragleave', () => zone.classList.remove('drag-over'));
     zone.addEventListener('drop', (e) => {
       e.preventDefault();
       zone.classList.remove('drag-over');
-      selectedFiles = Array.from(e.dataTransfer.files)
-        .filter(f => f.type.startsWith('image/'));
+      selectedFiles = Array.from(e.dataTransfer.files).filter(f => f.type.startsWith('image/'));
       if (selectedFiles.length) {
         uploadBtn.style.display = 'inline-block';
         uploadBtn.textContent   = `Upload ${selectedFiles.length} photo(s)`;
       }
     });
-
     fileInput.addEventListener('change', () => {
       selectedFiles = Array.from(fileInput.files);
       if (selectedFiles.length) {
@@ -213,20 +401,27 @@
       }
     });
 
-    /* ── Upload ── */
+    /* ─────────────────────────────────────────────────────────
+       UPLOAD — MODIFIED: appends albumId to FormData if selected
+       All other logic identical to original.
+    ───────────────────────────────────────────────────────── */
     async function uploadFiles(e) {
       e.stopPropagation();
       if (!selectedFiles.length) return;
       uploadBtn.disabled = true;
       const prog  = document.getElementById('upload-progress');
       prog.style.display = 'block';
-      const title = document.getElementById('upload-title').value.trim();
+      const title   = document.getElementById('upload-title').value.trim();
+      // ADDED: read selected album; fall back to currentAlbumId if none chosen
+      const albumId = document.getElementById('upload-album').value || currentAlbumId || '';
 
       for (let i = 0; i < selectedFiles.length; i++) {
         prog.textContent = `Uploading ${i + 1}/${selectedFiles.length}…`;
         const fd = new FormData();
         fd.append('image', selectedFiles[i]);
         fd.append('title', title || selectedFiles[i].name);
+        // ADDED: only append albumId if one is selected
+        if (albumId) fd.append('albumId', albumId);
         try {
           await api.uploadPhoto(fd);
         } catch (err) {
@@ -244,54 +439,41 @@
       await loadPhotos();
     }
 
-    /* ── Load Photos ── */
+    /* ─────────────────────────────────────────────────────────
+       LOAD PHOTOS — MODIFIED: passes currentAlbumId as filter
+       Grid rendering and error handling identical to original.
+    ───────────────────────────────────────────────────────── */
     async function loadPhotos() {
       const grid = document.getElementById('photo-grid');
       try {
-        const photos = await api.getPhotos();
+        // MODIFIED: pass albumId filter if one is selected
+        const params = currentAlbumId ? { albumId: currentAlbumId } : {};
+        const photos = await api.getPhotos(params);
 
         if (!photos.length) {
-          /*
-            CHANGE FROM ORIGINAL: improved empty-state markup.
-            SAFE: No JS reads or targets this empty-state content.
-          */
           grid.innerHTML = `
             <div class="photos-empty">
               <div class="empty-icon">📷</div>
-              <div class="empty-title">No photos yet</div>
-              <div class="empty-sub">Upload your first one above!</div>
+              <div class="empty-title">${currentAlbumId ? 'No photos in this album yet' : 'No photos yet'}</div>
+              <div class="empty-sub">${currentAlbumId ? 'Upload photos into this album above!' : 'Upload your first one above!'}</div>
             </div>`;
           return;
         }
 
-        /*
-          CHANGE FROM ORIGINAL: photo card template uses new CSS
-          class names (.photo-overlay, .title, .meta) but the
-          functional attributes are identical:
-            - onclick="openLightbox(...)"  ← unchanged
-            - class="delete-photo-btn"     ← unchanged (used by CSS :hover)
-            - onclick="deletePhoto(event,'${p._id}')"  ← unchanged
-            - img src, alt, loading        ← unchanged
-          The only diff is cosmetic wrapper classes for styling.
-        */
         grid.innerHTML = photos.map((p) => `
           <div class="photo-item"
                onclick="openLightbox('http://localhost:5000${p.imageUrl}','${esc(p.title)}')">
-
             <img src="http://localhost:5000${p.imageUrl}"
                  alt="${esc(p.title)}"
                  loading="lazy" />
-
             <button
               class="delete-photo-btn"
               onclick="deletePhoto(event, '${p._id}')"
               title="Delete photo">🗑</button>
-
             <div class="photo-overlay">
               <div class="title">${esc(p.title)}</div>
               <div class="meta">by ${esc(p.uploadedByName)} · ${fmtDate(p.uploadedAt)}</div>
             </div>
-
           </div>
         `).join('');
 
@@ -303,7 +485,9 @@
       }
     }
 
-    /* ── Delete Photo ── */
+    /* ─────────────────────────────────────────────────────────
+       DELETE PHOTO — UNCHANGED
+    ───────────────────────────────────────────────────────── */
     async function deletePhoto(e, id) {
       e.stopPropagation();
       if (!confirm('Delete this photo?')) return;
@@ -316,38 +500,170 @@
       }
     }
 
-    /* ── Lightbox ── */
+    /* ─────────────────────────────────────────────────────────
+       LIGHTBOX — UNCHANGED
+    ───────────────────────────────────────────────────────── */
     function openLightbox(url, caption) {
-      document.getElementById('lightbox-img').src          = url;
+      document.getElementById('lightbox-img').src             = url;
       document.getElementById('lightbox-caption').textContent = caption;
       document.getElementById('lightbox').classList.add('open');
     }
-
     function closeLightbox() {
       document.getElementById('lightbox').classList.remove('open');
     }
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') closeLightbox(); });
 
-    document.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') closeLightbox();
-    });
-
-    /* ── Helpers ── (identical to original) */
+    /* ─────────────────────────────────────────────────────────
+       HELPERS — UNCHANGED
+    ───────────────────────────────────────────────────────── */
     function esc(s) {
       return String(s ?? '').replace(/[&<>"']/g, c => ({
         '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'
       }[c]));
     }
-
     function fmtDate(iso) {
       return iso
-        ? new Date(iso).toLocaleDateString('en-IN', {
-            day: 'numeric', month: 'short', year: 'numeric'
-          })
+        ? new Date(iso).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' })
         : '';
     }
 
-    /* ── Init ── */
-    loadPhotos();
+    /* ─────────────────────────────────────────────────────────
+       ADDED: ALBUM LOGIC
+    ───────────────────────────────────────────────────────── */
+
+    // Load albums and render sidebar + upload select
+    async function loadAlbums() {
+      try {
+        albums = await api.getAlbums();
+        renderAlbumList();
+        renderAlbumSelect();
+      } catch (err) {
+        // Albums failing shouldn't break photo loading
+        console.error('Failed to load albums:', err.message);
+      }
+    }
+
+    function renderAlbumList() {
+      const list = document.getElementById('album-list');
+      const allItem = `
+        <li class="${currentAlbumId === '' ? 'active' : ''}"
+            data-id=""
+            onclick="selectAlbum('', 'All Photos', this)">
+          <span class="album-name-text">🖼 All Photos</span>
+        </li>`;
+
+      const albumItems = albums.map(a => `
+        <li class="${currentAlbumId === a._id ? 'active' : ''}"
+            data-id="${a._id}"
+            onclick="selectAlbum('${a._id}', '${esc(a.name)}', this)">
+          <span class="album-name-text">📁 ${esc(a.name)}</span>
+          <button class="album-delete-btn"
+                  onclick="deleteAlbum(event, '${a._id}', '${esc(a.name)}')"
+                  title="Delete album">🗑</button>
+        </li>`).join('');
+
+      list.innerHTML = allItem + albumItems;
+    }
+
+    function renderAlbumSelect() {
+      const sel = document.getElementById('upload-album');
+      const prev = sel.value;
+      sel.innerHTML = `<option value="">— No album (All Photos) —</option>` +
+        albums.map(a => `<option value="${a._id}">${esc(a.name)}</option>`).join('');
+      // Restore previous selection if still valid
+      if (prev && albums.some(a => a._id === prev)) sel.value = prev;
+    }
+
+    // Select album filter — updates state and re-renders
+    function selectAlbum(id, name, liEl) {
+      currentAlbumId = id;
+
+      // Update active class in sidebar
+      document.querySelectorAll('.album-list li').forEach(li => li.classList.remove('active'));
+      if (liEl) liEl.classList.add('active');
+
+      // Update banner
+      const banner     = document.getElementById('album-banner');
+      const bannerName = document.getElementById('album-banner-name');
+      if (id) {
+        bannerName.textContent = name;
+        banner.classList.add('visible');
+      } else {
+        banner.classList.remove('visible');
+      }
+
+      // Pre-select matching album in upload select
+      const sel = document.getElementById('upload-album');
+      sel.value = id || '';
+
+      loadPhotos();
+    }
+
+    // Create album modal
+    function openCreateAlbumModal() {
+      document.getElementById('album-name-input').value = '';
+      document.getElementById('album-desc-input').value = '';
+      document.getElementById('create-album-modal').classList.add('open');
+      setTimeout(() => document.getElementById('album-name-input').focus(), 50);
+    }
+    function closeCreateAlbumModal() {
+      document.getElementById('create-album-modal').classList.remove('open');
+    }
+    function handleModalBackdropClick(e) {
+      if (e.target === document.getElementById('create-album-modal')) closeCreateAlbumModal();
+    }
+
+    async function createAlbum() {
+      const name = document.getElementById('album-name-input').value.trim();
+      const desc = document.getElementById('album-desc-input').value.trim();
+      if (!name) {
+        showToast('Please enter an album name');
+        return;
+      }
+      const btn = document.getElementById('btn-do-create');
+      btn.disabled = true;
+      btn.textContent = 'Creating…';
+      try {
+        const album = await api.createAlbum({ name, description: desc });
+        albums.push(album);
+        renderAlbumList();
+        renderAlbumSelect();
+        closeCreateAlbumModal();
+        showToast(`Album "${album.name}" created!`);
+        // Auto-select the new album
+        const newLi = document.querySelector(`.album-list li[data-id="${album._id}"]`);
+        selectAlbum(album._id, album.name, newLi);
+      } catch (err) {
+        showToast('Failed to create album: ' + err.message);
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'Create';
+      }
+    }
+
+    async function deleteAlbum(e, id, name) {
+      e.stopPropagation();
+      if (!confirm(`Delete album "${name}"?\n\nPhotos will NOT be deleted — they'll move to All Photos.`)) return;
+      try {
+        await api.deleteAlbum(id);
+        albums = albums.filter(a => a._id !== id);
+        // If we were viewing the deleted album, go back to All Photos
+        if (currentAlbumId === id) {
+          selectAlbum('', 'All Photos', null);
+        }
+        renderAlbumList();
+        renderAlbumSelect();
+        showToast(`Album "${name}" deleted. Photos kept in All Photos.`);
+      } catch (err) {
+        showToast('Failed to delete album: ' + err.message);
+      }
+    }
+
+    /* ─────────────────────────────────────────────────────────
+       INIT
+    ───────────────────────────────────────────────────────── */
+    loadAlbums();   // loads albums then sidebar + select
+    loadPhotos();   // loads photos (no filter = all, same as original)
   </script>
 
 </body>
