@@ -87,6 +87,33 @@ const api = {
 
   /* Dashboard */
   getStats: () => apiFetch('/dashboard/stats'),
+
+  
+  /* Direct Messages */
+getConversations: () => apiFetch('/conversations'),
+
+startConversation: (memberId) => apiFetch('/conversations/start', {
+  method: 'POST',
+  body: JSON.stringify({ memberId })
+}),
+
+getDmMessages: (conversationId) =>
+  apiFetch(`/messages/conversation/${conversationId}`),
+
+sendDmMessage: (conversationId, content) =>
+  apiFetch(`/messages/conversation/${conversationId}`, {
+    method: 'POST',
+    body: JSON.stringify({ content })
+  }),
+
+getDmMessages: (conversationId, limit = 50) =>
+  apiFetch(`/messages/conversation/${conversationId}?limit=${limit}`),
+
+sendDmMessage: (conversationId, content) =>
+  apiFetch(`/messages/conversation/${conversationId}`, {
+    method: 'POST',
+    body: JSON.stringify({ content })
+  }),
 };
 
 /* ---------- Logout ---------- */

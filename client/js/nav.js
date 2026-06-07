@@ -12,7 +12,8 @@ function buildNav(activePage) {
     { href: 'index.html',      key: 'calendar',  icon: '📅', label: 'Calendar' },
     { href: 'events.html',     key: 'events',    icon: '🎉', label: 'Events' },
     { href: 'photos.html',     key: 'photos',    icon: '🖼️', label: 'Photos' },
-    { href: 'chat.html',       key: 'chat',      icon: '💬', label: 'Chat' },
+    { href: 'chat.html', key: 'chat',      icon: '💬', label: 'Family Chat' },
+    { href: 'dms.html',  key: 'dms',       icon: '✉️',  label: 'Direct Messages' },
   ];
 
   const navHTML = `
