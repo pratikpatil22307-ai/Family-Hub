@@ -1,11 +1,9 @@
 /* ============================================================
    api.js  —  Shared API utility for Family Hub
-   Handles: auth headers, base URL, error normalisation
    ============================================================ */
 
 const API_BASE = 'http://localhost:5000/api';
 
-/* ---------- Auth token helpers ---------- */
 const getToken = () => localStorage.getItem('fh_token');
 const getUser  = () => { try { return JSON.parse(localStorage.getItem('fh_user')); } catch { return null; } };
 const setAuth  = (token, user) => {
@@ -17,112 +15,78 @@ const clearAuth = () => {
   localStorage.removeItem('fh_user');
 };
 
-/* ---------- Redirect if not authenticated ---------- */
 const requireAuth = () => {
   const token = getToken();
   const user  = getUser();
-  if (!token || !user) {
-    window.location.href = '/login.html';
-    return false;
-  }
+  if (!token || !user) { window.location.href = '/login.html'; return false; }
   return true;
 };
 
-/* ---------- Core fetch wrapper ---------- */
 async function apiFetch(endpoint, options = {}) {
   const token = getToken();
   const headers = { 'Content-Type': 'application/json', ...(options.headers || {}) };
   if (token) headers['Authorization'] = `Bearer ${token}`;
-
-  // If FormData, let browser set Content-Type (with boundary)
   if (options.body instanceof FormData) delete headers['Content-Type'];
 
   const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
 
-  // Token expired or invalid
-  if (res.status === 401) {
-    clearAuth();
-    window.location.href = '/login.html';
-    return;
-  }
+  if (res.status === 401) { clearAuth(); window.location.href = '/login.html'; return; }
 
   let data;
   try { data = await res.json(); } catch { data = {}; }
-
   if (!res.ok) throw new Error(data.message || `Request failed (${res.status})`);
   return data;
 }
 
-/* ---------- Named API methods ---------- */
 const api = {
-  /* Auth */
-  login: (email, password) => apiFetch('/auth/login', {
-    method: 'POST', body: JSON.stringify({ email, password })
-  }),
-  register: (payload) => apiFetch('/auth/register', {
-    method: 'POST', body: JSON.stringify(payload)
-  }),
-  me: () => apiFetch('/auth/me'),
+  /* Auth — UNCHANGED */
+  login:    (email, password) => apiFetch('/auth/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+  register: (payload)         => apiFetch('/auth/register', { method: 'POST', body: JSON.stringify(payload) }),
+  me:       ()                => apiFetch('/auth/me'),
 
-  /* Events */
-  getEvents: (params = {}) => {
-    const q = new URLSearchParams(params).toString();
-    return apiFetch(`/events${q ? '?' + q : ''}`);
-  },
-  createEvent: (data) => apiFetch('/events', { method: 'POST', body: JSON.stringify(data) }),
-  updateEvent: (id, data) => apiFetch(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
-  deleteEvent: (id) => apiFetch(`/events/${id}`, { method: 'DELETE' }),
+  /* Events — UNCHANGED */
+  getEvents:   (params = {}) => { const q = new URLSearchParams(params).toString(); return apiFetch(`/events${q ? '?' + q : ''}`); },
+  createEvent: (data)        => apiFetch('/events', { method: 'POST', body: JSON.stringify(data) }),
+  updateEvent: (id, data)    => apiFetch(`/events/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteEvent: (id)          => apiFetch(`/events/${id}`, { method: 'DELETE' }),
 
-  /* Messages */
+  /* Messages — UNCHANGED */
   getMessages: (limit = 50) => apiFetch(`/messages?limit=${limit}`),
 
-  /* Photos */
-  getPhotos: () => apiFetch('/photos'),
-  uploadPhoto: (formData) => apiFetch('/photos', { method: 'POST', body: formData }),
-  deletePhoto: (id) => apiFetch(`/photos/${id}`, { method: 'DELETE' }),
+  /* Photos — MODIFIED: getPhotos accepts optional params */
+  // CHANGED: was () => apiFetch('/photos')
+  // NOW: accepts optional { albumId } so caller can filter
+  getPhotos:   (params = {}) => {
+    const q = new URLSearchParams(params).toString();
+    return apiFetch(`/photos${q ? '?' + q : ''}`);
+  },
+  uploadPhoto: (formData)    => apiFetch('/photos', { method: 'POST', body: formData }),
+  deletePhoto: (id)          => apiFetch(`/photos/${id}`, { method: 'DELETE' }),
 
-  /* Family */
-  getMembers: () => apiFetch('/family/members'),
+  /* Family — UNCHANGED */
+  getMembers:   () => apiFetch('/family/members'),
   getFamilyInfo: () => apiFetch('/family/info'),
 
-  /* Dashboard */
+  /* Dashboard — UNCHANGED */
   getStats: () => apiFetch('/dashboard/stats'),
 
-  
-  /* Direct Messages */
-getConversations: () => apiFetch('/conversations'),
+  /* Direct Messages — UNCHANGED (duplicates preserved as-is from original) */
+  getConversations:  ()                        => apiFetch('/conversations'),
+  startConversation: (memberId)                => apiFetch('/conversations/start', { method: 'POST', body: JSON.stringify({ memberId }) }),
+  getDmMessages:     (conversationId, limit = 50) => apiFetch(`/messages/conversation/${conversationId}?limit=${limit}`),
+  sendDmMessage:     (conversationId, content) => apiFetch(`/messages/conversation/${conversationId}`, { method: 'POST', body: JSON.stringify({ content }) }),
 
-startConversation: (memberId) => apiFetch('/conversations/start', {
-  method: 'POST',
-  body: JSON.stringify({ memberId })
-}),
-
-getDmMessages: (conversationId) =>
-  apiFetch(`/messages/conversation/${conversationId}`),
-
-sendDmMessage: (conversationId, content) =>
-  apiFetch(`/messages/conversation/${conversationId}`, {
-    method: 'POST',
-    body: JSON.stringify({ content })
-  }),
-
-getDmMessages: (conversationId, limit = 50) =>
-  apiFetch(`/messages/conversation/${conversationId}?limit=${limit}`),
-
-sendDmMessage: (conversationId, content) =>
-  apiFetch(`/messages/conversation/${conversationId}`, {
-    method: 'POST',
-    body: JSON.stringify({ content })
-  }),
+  // ── ADDED: Albums ──────────────────────────────────────────────────────────
+  getAlbums:    ()            => apiFetch('/albums'),
+  createAlbum:  (data)        => apiFetch('/albums', { method: 'POST', body: JSON.stringify(data) }),
+  getAlbum:     (id)          => apiFetch(`/albums/${id}`),
+  updateAlbum:  (id, data)    => apiFetch(`/albums/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteAlbum:  (id)          => apiFetch(`/albums/${id}`, { method: 'DELETE' }),
+  // ──────────────────────────────────────────────────────────────────────────
 };
 
-/* ---------- Logout ---------- */
-function logout() {
-  clearAuth();
-  window.location.href = '/login.html';
-}
+function logout() { clearAuth(); window.location.href = '/login.html'; }
 
-/* ---------- Populate nav user info ---------- */
 function populateNavUser() {
   const user = getUser();
   if (!user) return;
