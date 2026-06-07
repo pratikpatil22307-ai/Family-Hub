@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Family Hub — Direct Messages</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/dms.css" />
+  <link rel="stylesheet" href="css/mobile.css" />
+</head>
+<body>
+
+  <!-- ── Top header ─────────────────────────────────────────── -->
+  <header>
+    <span class="header-title">🏠 Family Hub</span>
+    <div class="header-status">
+      <span class="status-dot" id="conn-dot"></span>
+      <span id="header-family-name">Loading…</span>
+    </div>
+  </header>
+
+  <!-- ── Main layout ────────────────────────────────────────── -->
+  <div class="layout">
+
+    <!-- Nav sidebar (injected by nav.js) -->
+    <nav class="sidebar"><!-- injected --></nav>
+
+    <!-- DM area -->
+    <div class="dm-main">
+
+      <!-- Left: conversation list -->
+      <div class="dm-list-panel">
+        <div class="dm-list-header">
+          <h2>✉️ Direct Messages</h2>
+          <button class="new-dm-btn" onclick="openNewDmModal()">
+            ＋ New Message
+          </button>
+        </div>
+        <div class="dm-list-scroll" id="dm-list-scroll">
+          <!-- conversation items rendered by dms.js -->
+        </div>
+      </div>
+
+      <!-- Right: active chat or placeholder -->
+      <div class="dm-chat-panel" id="dm-chat-panel">
+        <!-- Placeholder when no conversation is open -->
+        <div class="dm-placeholder">
+          <span class="ph-icon">💬</span>
+          <h3>Pick a conversation</h3>
+          <p>Select someone from the left, or start a new direct message.</p>
+        </div>
+      </div>
+
+    </div><!-- /.dm-main -->
+  </div><!-- /.layout -->
+
+  <!-- ── New DM modal ───────────────────────────────────────── -->
+  <div class="dm-modal-overlay" id="new-dm-modal">
+    <div class="dm-modal">
+      <div class="dm-modal-header">
+        <h3>Start a Direct Message</h3>
+        <button class="dm-modal-close" onclick="closeNewDmModal()">×</button>
+      </div>
+      <div class="dm-modal-body">
+        <p>Choose a family member to message:</p>
+        <div class="member-pick-list" id="member-pick-list">
+          <!-- populated by openNewDmModal() -->
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Socket.IO (same server as family chat) -->
+
+  <!-- Shared helpers -->
+  <script src="js/api.js"></script>
+  <script src="js/nav.js"></script>
+  <script src="js/mobile-nav.js" defer></script>
+
+  <!-- DM logic -->
+  <script src="js/dms.js"></script>
+
+  <script>
+    // Gate: redirect if not logged in
+    if (!requireAuth()) throw new Error('Not authenticated');
+
+    // Build the nav sidebar, marking "dms" as active
+    buildNav('dms');
+
+    // Kick off DM initialisation
+    initDMs();
+  </script>
+</body>
+</html>
