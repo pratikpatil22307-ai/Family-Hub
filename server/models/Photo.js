@@ -23,6 +23,11 @@ const photoSchema = new mongoose.Schema({
     ref: 'Family',
     required: true,
   },
+  albumId: {
+  type: mongoose.Schema.Types.ObjectId,
+  ref: 'Album',
+  default: null,
+ },
   uploadedAt: {
     type: Date,
     default: Date.now,
