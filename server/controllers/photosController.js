@@ -62,8 +62,13 @@ const uploadPhoto = async (req, res) => {
 
     res.status(201).json(photo);
   } catch (err) {
-    res.status(500).json({ message: 'Failed to upload photo' });
-  }
+  console.error('PHOTO UPLOAD ERROR:', err);
+
+  res.status(500).json({
+    message: 'Failed to upload photo',
+    error: err.message
+  });
+}
 };
 
 // DELETE /api/photos/:id  — UNCHANGED
