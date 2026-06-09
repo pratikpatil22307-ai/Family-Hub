@@ -2,7 +2,10 @@
    api.js  —  Shared API utility for Family Hub
    ============================================================ */
 
-const API_BASE = 'http://localhost:5000/api';
+const API_URL =
+  window.location.hostname === 'localhost'
+    ? 'http://localhost:5000/api'
+    : 'https://family-hub-93pt.onrender.com/api';
 
 const getToken = () => localStorage.getItem('fh_token');
 const getUser  = () => { try { return JSON.parse(localStorage.getItem('fh_user')); } catch { return null; } };
@@ -28,7 +31,8 @@ async function apiFetch(endpoint, options = {}) {
   if (token) headers['Authorization'] = `Bearer ${token}`;
   if (options.body instanceof FormData) delete headers['Content-Type'];
 
-  const res = await fetch(`${API_BASE}${endpoint}`, { ...options, headers });
+  
+  const res = await fetch(`${API_URL}${endpoint}`, { ...options, headers });
 
   if (res.status === 401) { clearAuth(); window.location.href = '/login.html'; return; }
 
