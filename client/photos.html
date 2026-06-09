@@ -462,8 +462,8 @@
 
         grid.innerHTML = photos.map((p) => `
           <div class="photo-item"
-               onclick="openLightbox('http://localhost:5000${p.imageUrl}','${esc(p.title)}')">
-            <img src="http://localhost:5000${p.imageUrl}"
+              onclick="openLightbox('${p.imageUrl}', '${esc(p.title)}')">
+            <img src="${p.imageUrl}"
                  alt="${esc(p.title)}"
                  loading="lazy" />
             <button
