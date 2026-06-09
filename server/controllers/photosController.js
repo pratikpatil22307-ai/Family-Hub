@@ -1,3 +1,4 @@
+const cloudinary = require('../config/cloudinary');
 const path = require('path');
 const fs = require('fs');
 const Photo = require('../models/Photo');
@@ -48,11 +49,11 @@ const uploadPhoto = async (req, res) => {
       albumId = album._id;
     }
 
-    const imageUrl = `/uploads/${req.file.filename}`;
+   const imageUrl = req.file.path;
     const photo = await Photo.create({
       title: req.body.title?.trim() || req.file.originalname,
       imageUrl,
-      filename: req.file.filename,
+      filename: req.file.filename || null,
       uploadedBy: req.user._id,
       uploadedByName: req.user.name,
       familyId: req.user.familyId,
@@ -71,10 +72,20 @@ const deletePhoto = async (req, res) => {
     const photo = await Photo.findOne({ _id: req.params.id, familyId: req.user.familyId });
     if (!photo) return res.status(404).json({ message: 'Photo not found' });
 
-    if (photo.filename) {
-      const filePath = path.join(__dirname, '../uploads', photo.filename);
-      if (fs.existsSync(filePath)) fs.unlinkSync(filePath);
-    }
+   if (photo.imageUrl && photo.imageUrl.includes('cloudinary')) {
+  try {
+    const publicId = photo.imageUrl
+      .split('/upload/')[1]
+      .split('/')
+      .slice(1)
+      .join('/')
+      .replace(/\.[^/.]+$/, '');
+
+    await cloudinary.uploader.destroy(publicId);
+  } catch (err) {
+    console.error('Cloudinary delete failed:', err);
+  }
+}
 
     await photo.deleteOne();
     res.json({ message: 'Photo deleted' });
