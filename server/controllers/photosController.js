@@ -33,6 +33,8 @@ const getPhotos = async (req, res) => {
 // POST /api/photos
 // MODIFIED: accepts optional albumId in form body; validates it belongs to the family
 const uploadPhoto = async (req, res) => {
+  console.log('UPLOAD PHOTO CONTROLLER REACHED');
+
   try {
     if (!req.file) return res.status(400).json({ message: 'No image file provided' });
 
